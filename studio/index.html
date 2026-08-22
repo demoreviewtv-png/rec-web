@@ -11,11 +11,11 @@
       top: 15px;
       left: 15px;
       z-index: 9999;
-      background: rgba(26, 32, 44, 0.9);
+      background: rgba(26, 32, 44, 0.95);
       color: white;
       padding: 15px;
       border-radius: 12px;
-      width: 280px;
+      width: 290px;
       border: 2px solid #ff5722;
     }
     input, select, button, textarea {
@@ -28,7 +28,7 @@
     }
     button { background: #ff5722; color: white; font-weight: bold; cursor: pointer; }
     button:hover { background: #e64a19; }
-    textarea { height: 80px; font-family: monospace; font-size: 10px; }
+    textarea { height: 70px; font-family: monospace; font-size: 10px; }
   </style>
 </head>
 <body>
@@ -40,7 +40,7 @@
     
     <hr>
     
-    <h3>Add Shape</h3>
+    <h3>Add Object</h3>
     <select id="shape-type">
       <option value="box">Cube (Box)</option>
       <option value="sphere">Sphere</option>
@@ -62,9 +62,11 @@
 
     <hr>
 
-    <button id="export-json-btn">Export Room JSON</button>
-    <textarea id="output-json" readonly placeholder="Click Export to generate string..."></textarea>
-    <button onclick="location.href='index.html'" style="background:#4a5568;">Back to Main Game</button>
+    <button id="export-json-btn">Export JSON</button>
+    <textarea id="output-json" readonly placeholder="Export string will appear here..."></textarea>
+    
+    <button id="publish-game-btn" style="background: #38a169;">🚀 Publish to Game</button>
+    <button onclick="location.href='/'" style="background:#4a5568;">Back to Main Game</button>
   </div>
 
   <a-scene id="studio-scene">
@@ -90,30 +92,36 @@
       const objData = { type, color, position: `${x} ${y} ${z}` };
       mapObjects.push(objData);
 
-      renderObject(objData);
+      const container = document.getElementById('builder-container');
+      const el = document.createElement(`a-${type}`);
+      el.setAttribute('position', objData.position);
+      el.setAttribute('color', color);
+      if (type === 'plane') el.setAttribute('rotation', '-90 0 0');
+      container.appendChild(el);
     });
 
-    function renderObject(data) {
-      const container = document.getElementById('builder-container');
-      const el = document.createElement(`a-${data.type}`);
-      el.setAttribute('position', data.position);
-      el.setAttribute('color', data.color);
-      if (data.type === 'plane') el.setAttribute('rotation', '-90 0 0');
-      container.appendChild(el);
+    function generateJSON() {
+      const roomName = document.getElementById('map-name').value;
+      return JSON.stringify({
+        roomName: roomName || "CustomRoom",
+        skyColor: "#61C3FF",
+        objects: mapObjects
+      });
     }
 
     document.getElementById('export-json-btn').addEventListener('click', () => {
-      const roomName = document.getElementById('map-name').value;
-      const exportData = {
-        roomName: roomName,
-        skyColor: "#61C3FF",
-        objects: mapObjects
-      };
-      
-      const jsonString = JSON.stringify(exportData);
+      const jsonString = generateJSON();
       document.getElementById('output-json').value = jsonString;
       navigator.clipboard.writeText(jsonString);
       alert("Copied Map JSON string to clipboard!");
+    });
+
+    // Publish map directly back to main game route
+    document.getElementById('publish-game-btn').addEventListener('click', () => {
+      const jsonString = generateJSON();
+      const encodedJSON = encodeURIComponent(jsonString);
+      // Redirects to root domain with room query
+      window.location.href = `/?room=${encodedJSON}`;
     });
   </script>
 </body>
