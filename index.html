@@ -6,23 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Rec Room WebXR Clone</title>
   
-  <!-- External Libraries -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
-  <!-- Custom Styles -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- Open Watch Button -->
   <button id="watch-toggle-btn">⌚ Open Watch Menu</button>
 
-  <!-- Smartwatch UI Overlay -->
+  <!-- Smartwatch UI -->
   <div id="watch-interface">
     <div class="watch-header">REC ROOM WATCH</div>
     
-    <!-- Watch Navigation Tabs -->
+    <!-- Main Watch Tabs -->
     <div class="watch-tabs">
       <button class="tab-btn active" data-tab="play">Play</button>
       <button class="tab-btn" data-tab="friends">Friends</button>
@@ -34,35 +31,67 @@
     <!-- Watch Body Content -->
     <div class="watch-body">
       
-      <!-- PLAY TAB (Rec Room Originals) -->
+      <!-- PLAY TAB -->
       <div id="tab-play" class="tab-content active">
-        <h3>Rec Room Originals</h3>
-        <div class="rro-grid">
-          <div class="rro-card" data-game="paintball">
-            <h4>🔴 Paintball</h4>
-            <p>CTF & TDM</p>
-          </div>
-          <div class="rro-card" data-game="golden-trophy">
-            <h4>🏆 Golden Trophy</h4>
-            <p>Co-op Quest</p>
-          </div>
-          <div class="rro-card" data-game="lost-skulls">
-            <h4>💀 Lost Skulls</h4>
-            <p>Pirate Quest</p>
-          </div>
-          <div class="rro-card" data-game="dodgeball">
-            <h4>🏐 Dodgeball</h4>
-            <p>3v3 Throwing</p>
-          </div>
-          <div class="rro-card" data-game="laser-tag">
-            <h4>🔫 Laser Tag</h4>
-            <p>Sci-Fi Arena</p>
-          </div>
-          <div class="rro-card" data-game="rec-royale">
-            <h4>🪂 Rec Royale</h4>
-            <p>Battle Royale</p>
+        <!-- Play Sub-Tabs -->
+        <div class="sub-tabs">
+          <button class="sub-tab-btn active" data-subtab="rro">RROs</button>
+          <button class="sub-tab-btn" data-subtab="community">Community</button>
+          <button class="sub-tab-btn" data-subtab="import">Import JSON</button>
+        </div>
+
+        <!-- SUB-TAB 1: RROs -->
+        <div id="subtab-rro" class="subtab-content active">
+          <div class="rro-grid">
+            <div class="rro-card" data-game="paintball">
+              <h4>🔴 Paintball</h4>
+              <p>CTF & TDM</p>
+            </div>
+            <div class="rro-card" data-game="golden-trophy">
+              <h4>🏆 Golden Trophy</h4>
+              <p>Co-op Quest</p>
+            </div>
+            <div class="rro-card" data-game="lost-skulls">
+              <h4>💀 Lost Skulls</h4>
+              <p>Pirate Quest</p>
+            </div>
+            <div class="rro-card" data-game="dodgeball">
+              <h4>🏐 Dodgeball</h4>
+              <p>3v3 Throwing</p>
+            </div>
+            <div class="rro-card" data-game="laser-tag">
+              <h4>🔫 Laser Tag</h4>
+              <p>Sci-Fi Arena</p>
+            </div>
+            <div class="rro-card" data-game="rec-royale">
+              <h4>🪂 Rec Royale</h4>
+              <p>Battle Royale</p>
+            </div>
           </div>
         </div>
+
+        <!-- SUB-TAB 2: Community Rooms -->
+        <div id="subtab-community" class="subtab-content">
+          <div class="rro-grid">
+            <div class="rro-card" onclick="location.href='studio.html'">
+              <h4>🛠️ Open JR Studio</h4>
+              <p>Build custom maps</p>
+            </div>
+            <div class="rro-card" data-game="parkour-world">
+              <h4>🧗 ^ParkourWorld</h4>
+              <p>Featured Community Map</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 3: Import Map JSON String -->
+        <div id="subtab-import" class="subtab-content">
+          <h3>Load JR Studio Map</h3>
+          <p class="sub-text">Paste a JSON map string exported from JR Studio:</p>
+          <textarea id="json-map-input" placeholder='{"roomName":"My Map","objects":[...]}'></textarea>
+          <button id="load-json-btn">Publish & Load Room</button>
+        </div>
+
       </div>
 
       <!-- FRIENDS TAB -->
@@ -120,7 +149,6 @@
     </a-entity>
   </a-scene>
 
-  <!-- Application Logic -->
   <script src="js/rro-games.js"></script>
   <script src="js/app.js"></script>
 </body>
