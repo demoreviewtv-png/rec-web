@@ -79,8 +79,90 @@ select, input[type="color"] {
 .btn-secondary:hover { background: #475569; }
 
 /* Control Hint Overlay */
-#controls-hint {
+#controls-hint, #hud-overlay {
   position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9990;
   background: rgba(15, 23, 42, 0.85); color: #e2e8f0; padding: 10px 20px; border-radius: 30px;
   font-size: 0.85rem; font-weight: 600; border: 1px solid var(--rr-border); pointer-events: none;
+}
+
+/* Non-blocking toast (replaces alert() so the world never freezes) */
+#rro-toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: var(--rr-panel); color: #fff; padding: 10px 20px; border-radius: 30px;
+  border: 2px solid var(--rr-orange); font-weight: 700; font-size: 0.85rem;
+  z-index: 99998; opacity: 0; pointer-events: none; transition: all 0.25s ease;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+#rro-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Watch launcher button (always visible, top-left) */
+#watch-toggle-btn {
+  position: absolute; top: 20px; left: 20px; z-index: 9991;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--rr-panel); border: 3px solid var(--rr-orange);
+  color: #fff; font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+#watch-toggle-btn:hover { background: #1e293b; }
+
+/* Watch screen interface (2D hub menu: home / games / avatar / friends) */
+#watch-interface {
+  display: none; position: absolute; top: 20px; left: 90px; z-index: 9991;
+  width: 360px; max-height: 80vh; overflow-y: auto;
+  background: var(--rr-panel); border: 3px solid var(--rr-orange); border-radius: 20px;
+  color: #fff; box-shadow: 0 20px 40px rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+  flex-direction: column;
+}
+
+.watch-time {
+  font-size: 1.8rem; font-weight: 800; text-align: center; color: var(--rr-orange);
+  padding: 16px 16px 8px;
+}
+
+.tab-bar { display: flex; border-bottom: 2px solid var(--rr-border); }
+.tab-btn {
+  flex: 1; background: transparent; border: none; color: #94a3b8; padding: 10px 4px;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent;
+}
+.tab-btn:hover { color: #e2e8f0; }
+.tab-btn.active { color: var(--rr-orange); border-bottom-color: var(--rr-orange); }
+
+.tab-content { display: none; padding: 16px; }
+.tab-content.active { display: block; }
+
+.tab-content h3 { margin: 0 0 10px; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Game picker cards */
+.rro-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rro-card {
+  background: #1e293b; border: 2px solid var(--rr-border); border-radius: 12px;
+  padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.15s ease;
+}
+.rro-card:hover { background: #334155; border-color: var(--rr-orange); transform: translateY(-2px); }
+.rro-card .rro-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+.rro-card .rro-name { font-size: 0.75rem; font-weight: 700; }
+
+/* Avatar tab */
+#avatar-preview-wrap { display: flex; justify-content: center; margin-bottom: 14px; }
+.swatch-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.color-swatch {
+  width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer;
+  border: 3px solid transparent; transition: all 0.15s ease;
+}
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--rr-orange); }
+
+/* Friends tab */
+.friend-row { display: flex; gap: 8px; margin-top: 8px; }
+.friend-row input {
+  flex: 1; background: #1e293b; color: #fff; border: 1px solid var(--rr-border);
+  padding: 10px; border-radius: 8px;
+}
+.id-display {
+  background: #1e293b; border: 1px solid var(--rr-border); border-radius: 8px;
+  padding: 10px; font-family: monospace; font-size: 0.8rem; word-break: break-all;
+}
+.player-count-badge {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+  background: #1e293b; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem;
 }
