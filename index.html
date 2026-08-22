@@ -1,364 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Rec Room Web - Universal Engine with Watch Menu</title>
-
-  <style>
-    :root {
-      --rr-orange: #ff5722;
-      --rr-blue: #0284c7;
-      --rr-dark: #0f172a;
-    }
-
-    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, -apple-system, sans-serif; }
-
-    #crosshair {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 8px; height: 8px; border: 2px solid #ffffff; background: var(--rr-orange);
-      border-radius: 50%; z-index: 9998; pointer-events: none;
-    }
-
-    /* Screen Watch Overlay (PC/Mobile) */
-    #watch-overlay {
-      position: absolute; top: 20px; left: 20px; z-index: 9995;
-      background: rgba(15, 23, 42, 0.95); border: 2px solid var(--rr-orange);
-      border-radius: 16px; width: 220px; color: #fff; padding: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: block;
-    }
-
-    .watch-time { font-size: 1.4rem; font-weight: bold; text-align: center; color: var(--rr-orange); margin-bottom: 8px; }
-    .watch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
-    /* Maker Pen UI Panel */
-    #maker-pen-ui {
-      position: absolute; top: 15px; right: 15px; width: 250px;
-      background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; border-radius: 12px;
-      padding: 12px; color: #ffffff; z-index: 9990; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-
-    .ui-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .ui-title { font-weight: bold; font-size: 0.9rem; color: var(--rr-orange); }
-    .ui-tag { font-size: 0.65rem; background: var(--rr-blue); padding: 2px 6px; border-radius: 4px; }
-
-    .ink-track { width: 100%; height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin: 4px 0 10px; }
-    .ink-fill { width: 0%; height: 100%; background: var(--rr-orange); transition: width 0.2s; }
-
-    .tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
-    button { background: #1e293b; border: 1px solid #475569; color: #fff; padding: 6px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
-    button:hover { background: #334155; }
-    button.active { background: var(--rr-orange); border-color: #ff784e; }
-
-    label { font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 6px; }
-    select, input[type="color"] { width: 100%; margin-top: 2px; margin-bottom: 6px; background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: 4px; padding: 4px; }
-
-    #hud-overlay {
-      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-      z-index: 9990; background: rgba(15, 23, 42, 0.85); color: #ffffff;
-      padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #334155; pointer-events: none;
-    }
-  </style>
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#ff5722">
+  <title>Rec Web</title>
+  <link rel="stylesheet" href="css/style.css">
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
-
   <div id="crosshair"></div>
-  <div id="hud-overlay">Press 'T' to toggle Watch | Grab & Build Tools ready</div>
+  <button id="watch-toggle-btn" type="button" aria-label="Open watch">⌚</button>
+  <div id="current-room-label">Rec Center Plaza</div>
+  <button id="return-hub-btn" class="hidden" type="button">← Rec Center</button>
+  <div id="hud-hint">WASD to move · Mouse to look · Click objects to interact · T for Watch</div>
+  <div id="rro-toast"></div>
 
-  <!-- PC / Mobile 2D Watch Menu Screen Interface -->
-  <div id="watch-overlay">
+  <div id="watch-interface">
     <div class="watch-time" id="clock-display">00:00:00</div>
-    <div class="watch-grid">
-      <button onclick="WatchMenu.toggleMakerPen()">📐 Pen UI</button>
-      <button onclick="MakerPen.clearRoom()">🗑️ Clear</button>
-      <button onclick="WatchMenu.resetPosition()">🏠 Home</button>
-      <button onclick="WatchMenu.toggleWatch()">❌ Close</button>
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="home">Home</button>
+      <button class="tab-btn" data-tab="games">Games</button>
+      <button class="tab-btn" data-tab="avatar">Avatar</button>
+      <button class="tab-btn" data-tab="friends">Friends</button>
     </div>
+    <section class="tab-content active" id="tab-home">
+      <h3>Quick Actions</h3>
+      <button class="btn-primary" id="open-pen-btn">Open Maker Pen</button>
+      <button class="btn-primary btn-secondary" id="home-reset-btn">Reset Position</button>
+      <button class="btn-primary btn-secondary" id="clear-build-btn">Clear My Builds</button>
+    </section>
+    <section class="tab-content" id="tab-games">
+      <h3>Activities</h3>
+      <div class="rro-card-grid">
+        <button class="rro-card" data-game="hub"><span class="rro-icon">🏠</span><span class="rro-name">Rec Center</span></button>
+        <button class="rro-card" data-game="dodgeball"><span class="rro-icon">🔴</span><span class="rro-name">Dodgeball</span></button>
+        <button class="rro-card" data-game="paintball"><span class="rro-icon">🎨</span><span class="rro-name">Paintball</span></button>
+        <button class="rro-card" data-game="goldentrophy"><span class="rro-icon">🏆</span><span class="rro-name">Golden Trophy</span></button>
+      </div>
+    </section>
+    <section class="tab-content" id="tab-avatar">
+      <h3>Avatar Color</h3>
+      <div id="avatar-preview-wrap"><div id="avatar-preview"></div></div>
+      <div class="swatch-grid">
+        <button class="color-swatch" data-color="#ff5722" style="background:#ff5722"></button>
+        <button class="color-swatch" data-color="#0284c7" style="background:#0284c7"></button>
+        <button class="color-swatch" data-color="#22c55e" style="background:#22c55e"></button>
+        <button class="color-swatch" data-color="#facc15" style="background:#facc15"></button>
+        <button class="color-swatch" data-color="#ec4899" style="background:#ec4899"></button>
+        <button class="color-swatch" data-color="#a855f7" style="background:#a855f7"></button>
+      </div>
+    </section>
+    <section class="tab-content" id="tab-friends">
+      <h3>Local Peer Room</h3>
+      <div class="id-display" id="my-peer-id">Connecting…</div>
+      <div class="friend-row">
+        <input id="friend-id-input" placeholder="Friend peer ID" autocomplete="off">
+        <button id="connect-friend-btn" type="button">Join</button>
+      </div>
+      <div class="player-count-badge">Players: <strong id="player-count">1</strong></div>
+    </section>
   </div>
 
   <div id="maker-pen-ui">
-    <div class="ui-header">
-      <span class="ui-title">📐 MAKER PEN</span>
-      <span class="ui-tag">PHYSICS READY</span>
-    </div>
-
-    <div style="display:flex; justify-between; font-size: 0.7rem;">
-      <span>INK USED</span>
-      <span id="ink-val" style="margin-left:auto;">0%</span>
-    </div>
-    <div class="ink-track"><div id="ink-fill" class="ink-fill"></div></div>
-
+    <div class="ui-header"><span class="ui-title">MAKER PEN</span><span class="ui-tag">BUILD</span></div>
+    <div class="ink-container"><div class="ink-header"><span>INK</span><span id="ink-val">0%</span></div><div class="ink-track"><div id="ink-fill" class="ink-fill"></div></div></div>
     <div class="tool-grid">
-      <button class="btn-tool active" id="tool-grab" onclick="MakerPen.setTool('grab')">✊ Grab</button>
-      <button class="btn-tool" id="tool-create" onclick="MakerPen.setTool('create')">✏️ Create</button>
-      <button class="btn-tool" id="tool-wire" onclick="MakerPen.setTool('wire')">🔌 Wire</button>
-      <button class="btn-tool" id="tool-recolor" onclick="MakerPen.setTool('recolor')">🎨 Color</button>
-      <button class="btn-tool" id="tool-delete" onclick="MakerPen.setTool('delete')">🗑️ Del</button>
+      <button class="btn-tool active" id="tool-grab" type="button">Grab</button>
+      <button class="btn-tool" id="tool-create" type="button">Create</button>
+      <button class="btn-tool" id="tool-wire" type="button">Wire</button>
+      <button class="btn-tool" id="tool-recolor" type="button">Color</button>
+      <button class="btn-tool" id="tool-delete" type="button">Delete</button>
     </div>
-
-    <label>Primitive Shape</label>
-    <select id="shape-select">
-      <option value="box">Cube</option>
-      <option value="sphere">Sphere</option>
-      <option value="cylinder">Cylinder</option>
-    </select>
-
-    <label>Color</label>
-    <input type="color" id="color-select" value="#ff5722">
-
-    <button style="width:100%; margin-top:4px;" onclick="MakerPen.spawnShape()">Spawn Object</button>
+    <label for="shape-select">Shape</label>
+    <select id="shape-select"><option value="box">Cube</option><option value="sphere">Sphere</option><option value="cylinder">Cylinder</option><option value="cone">Cone</option></select>
+    <label for="color-select">Color</label><input id="color-select" type="color" value="#ff5722">
+    <button id="spawn-shape-btn" class="btn-primary" type="button">Spawn Object</button>
+    <button id="close-pen-btn" class="btn-primary btn-secondary" type="button">Close</button>
   </div>
 
-  <a-scene webxr="optionalFeatures: hit-test, local-floor;" renderer="antialias: true; colorManagement: true;" vr-mode-ui="enabled: true">
+  <div id="mobile-controls" aria-hidden="true">
+    <div id="joystick"><div id="joystick-knob"></div></div>
+    <button id="mobile-jump" type="button">↑</button>
+    <button id="mobile-use" type="button">USE</button>
+  </div>
+
+  <a-scene id="scene" renderer="antialias:true; colorManagement:true" vr-mode-ui="enabled:true" background="color:#61c3ff">
     <a-sky color="#61C3FF"></a-sky>
-    <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#1e293b"></a-plane>
-
+    <a-plane position="0 -0.02 0" rotation="-90 0 0" width="100" height="100" color="#1e293b"></a-plane>
     <a-entity id="world-container"></a-entity>
-
+    <a-entity id="build-container"></a-entity>
     <a-entity id="rig" position="0 0 0">
-      <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true" wasd-controls="acceleration: 30">
-        <a-cursor fuse="false" raycaster="objects: .selectable" color="#ff5722"></a-cursor>
-        <a-entity id="hold-node" position="0 0 -2"></a-entity>
-      </a-entity>
-
-      <!-- WebXR VR Left Controller with 3D Wrist Watch Attached -->
-      <a-entity id="left-controller" laser-controls="hand: left" raycaster="objects: .selectable">
-        <a-box id="vr-watch-body" position="0 0.02 0.1" rotation="-90 0 0" width="0.1" height="0.1" depth="0.02" color="#0f172a">
-          <a-text id="vr-clock-text" value="00:00" position="0 0 0.02" align="center" scale="0.25 0.25 0.25" color="#ff5722"></a-text>
-        </a-box>
-      </a-entity>
-
-      <a-entity id="right-controller" laser-controls="hand: right" raycaster="objects: .selectable"></a-entity>
+      <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled:true" wasd-controls="acceleration:45; fly:false" cursor="rayOrigin:mouse; fuse:false" raycaster="objects:.selectable; far:20"></a-entity>
+      <a-entity id="hold-node" position="0 0 -2"></a-entity>
+      <a-entity id="left-hand" laser-controls="hand:left" raycaster="objects:.selectable; far:20"></a-entity>
+      <a-entity id="right-hand" laser-controls="hand:right" raycaster="objects:.selectable; far:20"></a-entity>
     </a-entity>
   </a-scene>
 
-  <script>
-    const WatchMenu = {
-      visible: true,
-
-      init() {
-        this.startClock();
-        window.addEventListener('keydown', (e) => {
-          if (e.key.toLowerCase() === 't') this.toggleWatch();
-        });
-      },
-
-      toggleWatch() {
-        this.visible = !this.visible;
-        document.getElementById('watch-overlay').style.display = this.visible ? 'block' : 'none';
-      },
-
-      toggleMakerPen() {
-        const pen = document.getElementById('maker-pen-ui');
-        pen.style.display = pen.style.display === 'none' ? 'block' : 'none';
-      },
-
-      resetPosition() {
-        const rig = document.getElementById('rig');
-        if (rig) rig.setAttribute('position', '0 0 0');
-      },
-
-      startClock() {
-        const updateTime = () => {
-          const now = new Date();
-          const timeStr = now.toTimeString().split(' ')[0];
-          document.getElementById('clock-display').innerText = timeStr;
-
-          const vrClock = document.getElementById('vr-clock-text');
-          if (vrClock) vrClock.setAttribute('value', timeStr.substring(0, 5));
-        };
-        setInterval(updateTime, 1000);
-        updateTime();
-      }
-    };
-
-    const MakerPen = {
-      activeTool: 'grab',
-      mapEntities: {},
-      heldObject: null,
-      MAX_INK: 30,
-      GRAVITY: -9.8,
-
-      init() {
-        this.startEngineLoop();
-      },
-
-      setTool(tool) {
-        if (this.heldObject) this.dropObject();
-        this.activeTool = tool;
-        document.querySelectorAll('.btn-tool').forEach(btn => btn.classList.remove('active'));
-        const btn = document.getElementById(`tool-${tool}`);
-        if (btn) btn.classList.add('active');
-      },
-
-      updateInk() {
-        const count = Object.keys(this.mapEntities).length;
-        const pct = Math.min(100, Math.round((count / this.MAX_INK) * 100));
-        document.getElementById('ink-val').innerText = `${pct}%`;
-        document.getElementById('ink-fill').style.width = `${pct}%`;
-      },
-
-      getSpawnPos() {
-        const cam = document.getElementById('camera');
-        const pos = new THREE.Vector3();
-        const dir = new THREE.Vector3();
-        cam.object3D.getWorldPosition(pos);
-        cam.object3D.getWorldDirection(dir);
-        const spawnPos = pos.add(dir.multiplyScalar(-2.5));
-        return { x: spawnPos.x, y: Math.max(1.5, spawnPos.y), z: spawnPos.z };
-      },
-
-      spawnShape() {
-        if (Object.keys(this.mapEntities).length >= this.MAX_INK) return alert("Room Ink Full!");
-        const type = document.getElementById('shape-select').value;
-        const color = document.getElementById('color-select').value;
-        const id = 'obj_' + Date.now();
-        const pos = this.getSpawnPos();
-        
-        this.createEntity({
-          id, type, color,
-          position: `${pos.x.toFixed(2)} ${pos.y.toFixed(2)} ${pos.z.toFixed(2)}`,
-          isPhysics: true, velocityY: 0
-        });
-      },
-
-      createEntity(data) {
-        const container = document.getElementById('world-container');
-        const el = document.createElement(`a-${data.type}`);
-        el.setAttribute('id', data.id);
-        el.setAttribute('class', 'selectable');
-        el.setAttribute('position', data.position);
-        el.setAttribute('color', data.color);
-
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.handleInteraction(data.id);
-        });
-
-        container.appendChild(el);
-        this.mapEntities[data.id] = data;
-        this.updateInk();
-      },
-
-      handleInteraction(id) {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        if (this.activeTool === 'grab') {
-          if (this.heldObject === id) this.dropObject();
-          else this.grabObject(id);
-        } else if (this.activeTool === 'delete') {
-          if (this.heldObject === id) this.dropObject();
-          el.remove();
-          delete this.mapEntities[id];
-          this.updateInk();
-        } else if (this.activeTool === 'recolor') {
-          const color = document.getElementById('color-select').value;
-          el.setAttribute('color', color);
-          if (this.mapEntities[id]) this.mapEntities[id].color = color;
-        }
-      },
-
-      grabObject(id) {
-        if (this.heldObject) this.dropObject();
-        const el = document.getElementById(id);
-        const holdNode = document.getElementById('hold-node');
-        if (!el || !holdNode) return;
-
-        this.heldObject = id;
-        this.mapEntities[id].isHeld = true;
-        holdNode.appendChild(el);
-        el.setAttribute('position', '0 0 0');
-      },
-
-      dropObject() {
-        if (!this.heldObject) return;
-        const id = this.heldObject;
-        const el = document.getElementById(id);
-        const container = document.getElementById('world-container');
-
-        if (el && container) {
-          const worldPos = new THREE.Vector3();
-          el.object3D.getWorldPosition(worldPos);
-
-          container.appendChild(el);
-          el.setAttribute('position', `${worldPos.x} ${worldPos.y} ${worldPos.z}`);
-          
-          if (this.mapEntities[id]) {
-            this.mapEntities[id].isHeld = false;
-            this.mapEntities[id].velocityY = 0;
-          }
-        }
-        this.heldObject = null;
-      },
-
-      clearRoom() {
-        document.getElementById('world-container').innerHTML = '';
-        this.mapEntities = {};
-        this.heldObject = null;
-        this.updateInk();
-      },
-
-      startEngineLoop() {
-        let lastTime = performance.now();
-
-        const tick = (now) => {
-          const dt = Math.min((now - lastTime) / 1000, 0.1);
-          lastTime = now;
-
-          Object.values(this.mapEntities).forEach(data => {
-            const el = document.getElementById(data.id);
-            if (!el) return;
-
-            if (data.isPhysics && !data.isHeld) {
-              const pos = el.getAttribute('position');
-              const minHeight = 0.5;
-
-              if (pos.y > minHeight) {
-                data.velocityY = (data.velocityY || 0) + this.GRAVITY * dt;
-                let newY = pos.y + data.velocityY * dt;
-
-                if (newY <= minHeight) {
-                  newY = minHeight;
-                  data.velocityY = 0;
-                }
-                el.setAttribute('position', `${pos.x} ${newY} ${pos.z}`);
-              }
-            }
-          });
-
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      }
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      WatchMenu.init();
-      MakerPen.init();
-
-      const scene = document.querySelector('a-scene');
-      scene.addEventListener('click', () => {
-        if (scene.canvas) scene.canvas.focus();
-      });
-
-      scene.addEventListener('enter-vr', () => {
-        document.getElementById('watch-overlay').style.display = 'none';
-        document.getElementById('maker-pen-ui').style.display = 'none';
-        document.getElementById('hud-overlay').style.display = 'none';
-        document.getElementById('crosshair').style.display = 'none';
-      });
-
-      scene.addEventListener('exit-vr', () => {
-        document.getElementById('watch-overlay').style.display = 'block';
-        document.getElementById('maker-pen-ui').style.display = 'block';
-        document.getElementById('hud-overlay').style.display = 'block';
-        document.getElementById('crosshair').style.display = 'block';
-      });
-    });
-  </script>
+  <script src="js/rro-games.js"></script>
+  <script src="js/makerpen.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

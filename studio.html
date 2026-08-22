@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rec Room Studio - Circuits & Gizmos Builder</title>
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+
+  <script src="../js/engine.js"></script>
+  <script src="../js/makerpen.js"></script>
+</head>
+<body>
+
+  <!-- PC Desktop Guard -->
+  <div id="pc-only-block">
+    <h1>🖥️ PC DESKTOP REQUIRED</h1>
+    <p>Rec Room Studio Circuits & Maker Pen tools require PC Desktop hardware with mouse and keyboard controls.</p>
+  </div>
+
+  <div id="crosshair"></div>
+
+  <!-- Studio Maker Pen HUD Panel -->
+  <div id="maker-pen-ui" class="open">
+    <div class="ui-header">
+      <span class="ui-title">📐 MAKER PEN V2</span>
+      <span class="ui-tag">CV2 CIRCUITS</span>
+    </div>
+
+    <div class="ink-container">
+      <div class="ink-header"><span>INK CAPACITY</span><span id="ink-val">0%</span></div>
+      <div class="ink-track"><div id="ink-fill" class="ink-fill"></div></div>
+    </div>
+
+    <div class="tool-grid">
+      <button class="btn-tool active" id="tool-create" onclick="MakerPen.setTool('create')">✏️ Create</button>
+      <button class="btn-tool" id="tool-wire" onclick="MakerPen.setTool('wire')">🔌 Wire</button>
+      <button class="btn-tool" id="tool-move" onclick="MakerPen.setTool('move')">🖐️ Move</button>
+      <button class="btn-tool" id="tool-recolor" onclick="MakerPen.setTool('recolor')">🎨 Recolor</button>
+      <button class="btn-tool" id="tool-delete" onclick="MakerPen.setTool('delete')">🗑️ Delete</button>
+    </div>
+
+    <label>Shape Primitive</label>
+    <select id="shape-select">
+      <option value="box">Cube (Box)</option>
+      <option value="sphere">Sphere</option>
+      <option value="cylinder">Cylinder</option>
+      <option value="cone">Cone</option>
+    </select>
+
+    <label>Material Color</label>
+    <input type="color" id="color-select" value="#ff5722">
+
+    <button class="btn-primary" onclick="MakerPen.spawnShape()">Spawn Primitive</button>
+
+    <label>Circuits & Gizmos</label>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+      <button class="btn-tool" onclick="MakerPen.spawnGizmo('rotator')">⚙️ Rotator</button>
+      <button class="btn-tool" onclick="MakerPen.spawnGizmo('trigger')">🔲 Trigger Zone</button>
+    </div>
+
+    <button class="btn-primary btn-secondary" onclick="MakerPen.publishRoom()">🚀 Publish to Main Game</button>
+  </div>
+
+  <div id="controls-hint">
+    [WASD] Walk | [Mouse] Look | [Wire Tool] Click Gizmo then Click Object to attach
+  </div>
+
+  <a-scene id="scene" physics="debug: false; gravity: -9.8">
+    <a-sky color="#61C3FF"></a-sky>
+    <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#1e293b" static-body></a-plane>
+
+    <a-entity id="world-container"></a-entity>
+    <a-entity id="build-container"></a-entity>
+
+    <a-entity id="rig" position="0 0 0">
+      <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled:true" wasd-controls="acceleration:45; fly:false">
+        <a-entity cursor="fuse:false; rayOrigin:mouse" raycaster="objects:.selectable; far:20"></a-entity>
+      </a-entity>
+    </a-entity>
+  </a-scene>
+
+<div id="rro-toast"></div>
+</body>
+</html>
