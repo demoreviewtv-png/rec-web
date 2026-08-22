@@ -1,1 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JR Studio - Rec Room Map Maker</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #editor-panel {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 9999;
+      background: rgba(26, 32, 44, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      width: 280px;
+      border: 2px solid #ff5722;
+    }
+    input, select, button, textarea {
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: none;
+    }
+    button { background: #ff5722; color: white; font-weight: bold; cursor: pointer; }
+    button:hover { background: #e64a19; }
+    textarea { height: 80px; font-family: monospace; font-size: 10px; }
+  </style>
+</head>
+<body>
 
+  <div id="editor-panel">
+    <h2>🛠️ JR Studio</h2>
+    <label>Room Name:</label>
+    <input type="text" id="map-name" value="My Custom Room">
+    
+    <hr>
+    
+    <h3>Add Shape</h3>
+    <select id="shape-type">
+      <option value="box">Cube (Box)</option>
+      <option value="sphere">Sphere</option>
+      <option value="cylinder">Cylinder</option>
+      <option value="plane">Floor Plane</option>
+    </select>
+    
+    <label>Color:</label>
+    <input type="color" id="shape-color" value="#ff5722">
+    
+    <label>Position (X Y Z):</label>
+    <div style="display:flex; gap:4px;">
+      <input type="number" id="pos-x" value="0" step="0.5">
+      <input type="number" id="pos-y" value="1" step="0.5">
+      <input type="number" id="pos-z" value="-5" step="0.5">
+    </div>
+
+    <button id="add-object-btn">Spawn Object</button>
+
+    <hr>
+
+    <button id="export-json-btn">Export Room JSON</button>
+    <textarea id="output-json" readonly placeholder="Click Export to generate string..."></textarea>
+    <button onclick="location.href='index.html'" style="background:#4a5568;">Back to Main Game</button>
+  </div>
+
+  <a-scene id="studio-scene">
+    <a-sky color="#61C3FF"></a-sky>
+    <a-plane position="0 0 0" rotation="-90 0 0" width="40" height="40" color="#2d3748"></a-plane>
+    <a-entity id="builder-container"></a-entity>
+    
+    <a-entity position="0 1.6 0">
+      <a-camera look-controls wasd-controls></a-camera>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const mapObjects = [];
+
+    document.getElementById('add-object-btn').addEventListener('click', () => {
+      const type = document.getElementById('shape-type').value;
+      const color = document.getElementById('shape-color').value;
+      const x = document.getElementById('pos-x').value;
+      const y = document.getElementById('pos-y').value;
+      const z = document.getElementById('pos-z').value;
+
+      const objData = { type, color, position: `${x} ${y} ${z}` };
+      mapObjects.push(objData);
+
+      renderObject(objData);
+    });
+
+    function renderObject(data) {
+      const container = document.getElementById('builder-container');
+      const el = document.createElement(`a-${data.type}`);
+      el.setAttribute('position', data.position);
+      el.setAttribute('color', data.color);
+      if (data.type === 'plane') el.setAttribute('rotation', '-90 0 0');
+      container.appendChild(el);
+    }
+
+    document.getElementById('export-json-btn').addEventListener('click', () => {
+      const roomName = document.getElementById('map-name').value;
+      const exportData = {
+        roomName: roomName,
+        skyColor: "#61C3FF",
+        objects: mapObjects
+      };
+      
+      const jsonString = JSON.stringify(exportData);
+      document.getElementById('output-json').value = jsonString;
+      navigator.clipboard.writeText(jsonString);
+      alert("Copied Map JSON string to clipboard!");
+    });
+  </script>
+</body>
+</html>
