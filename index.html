@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Rec Room Web - Universal Engine with Maker Pen</title>
+  <title>Rec Room Web - Universal Engine with Watch Menu</title>
 
   <style>
     :root {
@@ -12,100 +12,52 @@
       --rr-dark: #0f172a;
     }
 
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, -apple-system, sans-serif; }
 
     #crosshair {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 8px; height: 8px;
-      border: 2px solid #ffffff;
-      background: var(--rr-orange);
-      border-radius: 50%;
-      z-index: 9998;
-      pointer-events: none;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 8px; height: 8px; border: 2px solid #ffffff; background: var(--rr-orange);
+      border-radius: 50%; z-index: 9998; pointer-events: none;
     }
 
-    /* Maker Pen Studio UI Panel */
+    /* Screen Watch Overlay (PC/Mobile) */
+    #watch-overlay {
+      position: absolute; top: 20px; left: 20px; z-index: 9995;
+      background: rgba(15, 23, 42, 0.95); border: 2px solid var(--rr-orange);
+      border-radius: 16px; width: 220px; color: #fff; padding: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: block;
+    }
+
+    .watch-time { font-size: 1.4rem; font-weight: bold; text-align: center; color: var(--rr-orange); margin-bottom: 8px; }
+    .watch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+    /* Maker Pen UI Panel */
     #maker-pen-ui {
-      position: absolute;
-      top: 15px; right: 15px;
-      width: 260px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 12px;
-      color: #ffffff;
-      z-index: 9990;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      position: absolute; top: 15px; right: 15px; width: 250px;
+      background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; border-radius: 12px;
+      padding: 12px; color: #ffffff; z-index: 9990; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
-    .ui-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
+    .ui-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .ui-title { font-weight: bold; font-size: 0.9rem; color: var(--rr-orange); }
     .ui-tag { font-size: 0.65rem; background: var(--rr-blue); padding: 2px 6px; border-radius: 4px; }
 
-    .ink-track {
-      width: 100%; height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin: 4px 0 10px;
-    }
+    .ink-track { width: 100%; height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin: 4px 0 10px; }
     .ink-fill { width: 0%; height: 100%; background: var(--rr-orange); transition: width 0.2s; }
 
-    .tool-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-
-    button {
-      background: #1e293b;
-      border: 1px solid #475569;
-      color: #fff;
-      padding: 6px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
-
+    .tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
+    button { background: #1e293b; border: 1px solid #475569; color: #fff; padding: 6px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
     button:hover { background: #334155; }
     button.active { background: var(--rr-orange); border-color: #ff784e; }
 
     label { font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 6px; }
-    select, input[type="color"] {
-      width: 100%; margin-top: 2px; margin-bottom: 6px; background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: 4px; padding: 4px;
-    }
+    select, input[type="color"] { width: 100%; margin-top: 2px; margin-bottom: 6px; background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: 4px; padding: 4px; }
 
     #hud-overlay {
-      position: absolute;
-      bottom: 15px; left: 50%;
-      transform: translateX(-50%);
-      z-index: 9990;
-      background: rgba(15, 23, 42, 0.85);
-      color: #ffffff;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      border: 1px solid #334155;
-      pointer-events: none;
+      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+      z-index: 9990; background: rgba(15, 23, 42, 0.85); color: #ffffff;
+      padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #334155; pointer-events: none;
     }
   </style>
 
@@ -114,13 +66,23 @@
 <body>
 
   <div id="crosshair"></div>
-  <div id="hud-overlay">WASD to Move | Click screen to focus | WebXR VR Ready</div>
+  <div id="hud-overlay">Press 'T' to toggle Watch | Grab & Build Tools ready</div>
 
-  <!-- MAKER PEN UI -->
+  <!-- PC / Mobile 2D Watch Menu Screen Interface -->
+  <div id="watch-overlay">
+    <div class="watch-time" id="clock-display">00:00:00</div>
+    <div class="watch-grid">
+      <button onclick="WatchMenu.toggleMakerPen()">📐 Pen UI</button>
+      <button onclick="MakerPen.clearRoom()">🗑️ Clear</button>
+      <button onclick="WatchMenu.resetPosition()">🏠 Home</button>
+      <button onclick="WatchMenu.toggleWatch()">❌ Close</button>
+    </div>
+  </div>
+
   <div id="maker-pen-ui">
     <div class="ui-header">
       <span class="ui-title">📐 MAKER PEN</span>
-      <span class="ui-tag">CV2 ENGINE</span>
+      <span class="ui-tag">PHYSICS READY</span>
     </div>
 
     <div style="display:flex; justify-between; font-size: 0.7rem;">
@@ -130,10 +92,10 @@
     <div class="ink-track"><div id="ink-fill" class="ink-fill"></div></div>
 
     <div class="tool-grid">
-      <button class="btn-tool active" id="tool-create" onclick="MakerPen.setTool('create')">✏️ Create</button>
+      <button class="btn-tool active" id="tool-grab" onclick="MakerPen.setTool('grab')">✊ Grab</button>
+      <button class="btn-tool" id="tool-create" onclick="MakerPen.setTool('create')">✏️ Create</button>
       <button class="btn-tool" id="tool-wire" onclick="MakerPen.setTool('wire')">🔌 Wire</button>
       <button class="btn-tool" id="tool-recolor" onclick="MakerPen.setTool('recolor')">🎨 Color</button>
-      <button class="btn-tool" id="tool-move" onclick="MakerPen.setTool('move')">🖐️ Move</button>
       <button class="btn-tool" id="tool-delete" onclick="MakerPen.setTool('delete')">🗑️ Del</button>
     </div>
 
@@ -147,13 +109,7 @@
     <label>Color</label>
     <input type="color" id="color-select" value="#ff5722">
 
-    <button style="width:100%; margin-top:4px;" onclick="MakerPen.spawnShape()">Spawn Shape</button>
-
-    <label>CV2 Gizmos</label>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-      <button onclick="MakerPen.spawnGizmo('rotator')">⚙️ Rotator</button>
-      <button onclick="MakerPen.spawnGizmo('trigger')">🔲 Trigger</button>
-    </div>
+    <button style="width:100%; margin-top:4px;" onclick="MakerPen.spawnShape()">Spawn Object</button>
   </div>
 
   <a-scene webxr="optionalFeatures: hit-test, local-floor;" renderer="antialias: true; colorManagement: true;" vr-mode-ui="enabled: true">
@@ -165,25 +121,73 @@
     <a-entity id="rig" position="0 0 0">
       <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true" wasd-controls="acceleration: 30">
         <a-cursor fuse="false" raycaster="objects: .selectable" color="#ff5722"></a-cursor>
+        <a-entity id="hold-node" position="0 0 -2"></a-entity>
       </a-entity>
 
-      <a-entity laser-controls="hand: left" raycaster="objects: .selectable"></a-entity>
-      <a-entity laser-controls="hand: right" raycaster="objects: .selectable"></a-entity>
+      <!-- WebXR VR Left Controller with 3D Wrist Watch Attached -->
+      <a-entity id="left-controller" laser-controls="hand: left" raycaster="objects: .selectable">
+        <a-box id="vr-watch-body" position="0 0.02 0.1" rotation="-90 0 0" width="0.1" height="0.1" depth="0.02" color="#0f172a">
+          <a-text id="vr-clock-text" value="00:00" position="0 0 0.02" align="center" scale="0.25 0.25 0.25" color="#ff5722"></a-text>
+        </a-box>
+      </a-entity>
+
+      <a-entity id="right-controller" laser-controls="hand: right" raycaster="objects: .selectable"></a-entity>
     </a-entity>
   </a-scene>
 
   <script>
-    const MakerPen = {
-      activeTool: 'create',
-      mapEntities: {},
-      selectedWireSource: null,
-      MAX_INK: 30,
+    const WatchMenu = {
+      visible: true,
 
       init() {
-        this.startCircuitLoop();
+        this.startClock();
+        window.addEventListener('keydown', (e) => {
+          if (e.key.toLowerCase() === 't') this.toggleWatch();
+        });
+      },
+
+      toggleWatch() {
+        this.visible = !this.visible;
+        document.getElementById('watch-overlay').style.display = this.visible ? 'block' : 'none';
+      },
+
+      toggleMakerPen() {
+        const pen = document.getElementById('maker-pen-ui');
+        pen.style.display = pen.style.display === 'none' ? 'block' : 'none';
+      },
+
+      resetPosition() {
+        const rig = document.getElementById('rig');
+        if (rig) rig.setAttribute('position', '0 0 0');
+      },
+
+      startClock() {
+        const updateTime = () => {
+          const now = new Date();
+          const timeStr = now.toTimeString().split(' ')[0];
+          document.getElementById('clock-display').innerText = timeStr;
+
+          const vrClock = document.getElementById('vr-clock-text');
+          if (vrClock) vrClock.setAttribute('value', timeStr.substring(0, 5));
+        };
+        setInterval(updateTime, 1000);
+        updateTime();
+      }
+    };
+
+    const MakerPen = {
+      activeTool: 'grab',
+      mapEntities: {},
+      heldObject: null,
+      MAX_INK: 30,
+      GRAVITY: -9.8,
+
+      init() {
+        this.startEngineLoop();
       },
 
       setTool(tool) {
+        if (this.heldObject) this.dropObject();
         this.activeTool = tool;
         document.querySelectorAll('.btn-tool').forEach(btn => btn.classList.remove('active'));
         const btn = document.getElementById(`tool-${tool}`);
@@ -203,10 +207,8 @@
         const dir = new THREE.Vector3();
         cam.object3D.getWorldPosition(pos);
         cam.object3D.getWorldDirection(dir);
-        
-        // Spawn 2.5 units in front of view direction
         const spawnPos = pos.add(dir.multiplyScalar(-2.5));
-        return `${spawnPos.x.toFixed(2)} ${Math.max(0.5, spawnPos.y).toFixed(2)} ${spawnPos.z.toFixed(2)}`;
+        return { x: spawnPos.x, y: Math.max(1.5, spawnPos.y), z: spawnPos.z };
       },
 
       spawnShape() {
@@ -214,19 +216,13 @@
         const type = document.getElementById('shape-select').value;
         const color = document.getElementById('color-select').value;
         const id = 'obj_' + Date.now();
-        this.createEntity({ id, type, color, position: this.getSpawnPos(), entityType: 'prop' });
-      },
-
-      spawnGizmo(gizmoType) {
-        if (Object.keys(this.mapEntities).length >= this.MAX_INK) return alert("Room Ink Full!");
-        const id = 'gizmo_' + Date.now();
-        const position = this.getSpawnPos();
-
-        if (gizmoType === 'rotator') {
-          this.createEntity({ id, type: 'cylinder', color: '#0284c7', position, entityType: 'rotator', speed: 60 });
-        } else if (gizmoType === 'trigger') {
-          this.createEntity({ id, type: 'box', color: '#38bdf8', position, entityType: 'trigger' });
-        }
+        const pos = this.getSpawnPos();
+        
+        this.createEntity({
+          id, type, color,
+          position: `${pos.x.toFixed(2)} ${pos.y.toFixed(2)} ${pos.z.toFixed(2)}`,
+          isPhysics: true, velocityY: 0
+        });
       },
 
       createEntity(data) {
@@ -236,13 +232,6 @@
         el.setAttribute('class', 'selectable');
         el.setAttribute('position', data.position);
         el.setAttribute('color', data.color);
-
-        if (data.entityType === 'trigger') {
-          el.setAttribute('material', `color: ${data.color}; transparent: true; opacity: 0.4`);
-          el.setAttribute('geometry', 'width: 1.5; height: 1.5; depth: 1.5');
-        } else if (data.entityType === 'rotator') {
-          el.setAttribute('geometry', 'radius: 0.3; height: 0.3');
-        }
 
         el.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -258,7 +247,11 @@
         const el = document.getElementById(id);
         if (!el) return;
 
-        if (this.activeTool === 'delete') {
+        if (this.activeTool === 'grab') {
+          if (this.heldObject === id) this.dropObject();
+          else this.grabObject(id);
+        } else if (this.activeTool === 'delete') {
+          if (this.heldObject === id) this.dropObject();
           el.remove();
           delete this.mapEntities[id];
           this.updateInk();
@@ -266,61 +259,73 @@
           const color = document.getElementById('color-select').value;
           el.setAttribute('color', color);
           if (this.mapEntities[id]) this.mapEntities[id].color = color;
-        } else if (this.activeTool === 'move') {
-          const pos = el.getAttribute('position');
-          el.setAttribute('position', `${pos.x} ${pos.y + 0.3} ${pos.z}`);
-        } else if (this.activeTool === 'wire') {
-          this.wireCircuit(id);
         }
       },
 
-      wireCircuit(targetId) {
-        if (!this.selectedWireSource) {
-          this.selectedWireSource = targetId;
-          alert(`Source selected: [${targetId}]. Click another object to attach it!`);
-        } else {
-          const sourceEl = document.getElementById(this.selectedWireSource);
-          const targetEl = document.getElementById(targetId);
-          if (sourceEl && targetEl && this.selectedWireSource !== targetId) {
-            sourceEl.appendChild(targetEl);
-            targetEl.setAttribute('position', '0 0.8 0');
-            alert(`Wired ${targetId} to Gizmo ${this.selectedWireSource}!`);
+      grabObject(id) {
+        if (this.heldObject) this.dropObject();
+        const el = document.getElementById(id);
+        const holdNode = document.getElementById('hold-node');
+        if (!el || !holdNode) return;
+
+        this.heldObject = id;
+        this.mapEntities[id].isHeld = true;
+        holdNode.appendChild(el);
+        el.setAttribute('position', '0 0 0');
+      },
+
+      dropObject() {
+        if (!this.heldObject) return;
+        const id = this.heldObject;
+        const el = document.getElementById(id);
+        const container = document.getElementById('world-container');
+
+        if (el && container) {
+          const worldPos = new THREE.Vector3();
+          el.object3D.getWorldPosition(worldPos);
+
+          container.appendChild(el);
+          el.setAttribute('position', `${worldPos.x} ${worldPos.y} ${worldPos.z}`);
+          
+          if (this.mapEntities[id]) {
+            this.mapEntities[id].isHeld = false;
+            this.mapEntities[id].velocityY = 0;
           }
-          this.selectedWireSource = null;
         }
+        this.heldObject = null;
       },
 
-      startCircuitLoop() {
+      clearRoom() {
+        document.getElementById('world-container').innerHTML = '';
+        this.mapEntities = {};
+        this.heldObject = null;
+        this.updateInk();
+      },
+
+      startEngineLoop() {
         let lastTime = performance.now();
-        const tick = (now) => {
-          const dt = (now - lastTime) / 1000;
-          lastTime = now;
 
-          const cam = document.getElementById('camera');
-          let playerPos = null;
-          if (cam) {
-            playerPos = new THREE.Vector3();
-            cam.object3D.getWorldPosition(playerPos);
-          }
+        const tick = (now) => {
+          const dt = Math.min((now - lastTime) / 1000, 0.1);
+          lastTime = now;
 
           Object.values(this.mapEntities).forEach(data => {
             const el = document.getElementById(data.id);
             if (!el) return;
 
-            // Rotator Logic
-            if (data.entityType === 'rotator') {
-              const rot = el.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
-              el.setAttribute('rotation', `${rot.x} ${(rot.y + data.speed * dt) % 360} ${rot.z}`);
-            }
+            if (data.isPhysics && !data.isHeld) {
+              const pos = el.getAttribute('position');
+              const minHeight = 0.5;
 
-            // Trigger Zone Detection
-            if (data.entityType === 'trigger' && playerPos) {
-              const triggerPos = new THREE.Vector3();
-              el.object3D.getWorldPosition(triggerPos);
-              if (playerPos.distanceTo(triggerPos) < 1.2) {
-                el.setAttribute('material', 'color: #ef4444; transparent: true; opacity: 0.7');
-              } else {
-                el.setAttribute('material', `color: ${data.color}; transparent: true; opacity: 0.4`);
+              if (pos.y > minHeight) {
+                data.velocityY = (data.velocityY || 0) + this.GRAVITY * dt;
+                let newY = pos.y + data.velocityY * dt;
+
+                if (newY <= minHeight) {
+                  newY = minHeight;
+                  data.velocityY = 0;
+                }
+                el.setAttribute('position', `${pos.x} ${newY} ${pos.z}`);
               }
             }
           });
@@ -332,6 +337,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+      WatchMenu.init();
       MakerPen.init();
 
       const scene = document.querySelector('a-scene');
@@ -340,12 +346,14 @@
       });
 
       scene.addEventListener('enter-vr', () => {
+        document.getElementById('watch-overlay').style.display = 'none';
         document.getElementById('maker-pen-ui').style.display = 'none';
         document.getElementById('hud-overlay').style.display = 'none';
         document.getElementById('crosshair').style.display = 'none';
       });
 
       scene.addEventListener('exit-vr', () => {
+        document.getElementById('watch-overlay').style.display = 'block';
         document.getElementById('maker-pen-ui').style.display = 'block';
         document.getElementById('hud-overlay').style.display = 'block';
         document.getElementById('crosshair').style.display = 'block';
