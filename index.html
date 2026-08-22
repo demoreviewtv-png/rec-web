@@ -1,155 +1,82 @@
-<comment>This Is The Main Game, All Other Files Should NOT be Run In The Site.</comment>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Rec Room WebXR Clone</title>
-  
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rec Room Web - Game Room</title>
 
   <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+
+  <script src="js/engine.js"></script>
+  <script src="js/rro-games.js"></script>
 </head>
 <body>
 
-  <button id="watch-toggle-btn">⌚ Open Watch Menu</button>
+  <div id="crosshair"></div>
 
-  <!-- Smartwatch UI -->
-  <div id="watch-interface">
-    <div class="watch-header">REC ROOM WATCH</div>
-    
-    <!-- Main Watch Tabs -->
-    <div class="watch-tabs">
-      <button class="tab-btn active" data-tab="play">Play</button>
-      <button class="tab-btn" data-tab="friends">Friends</button>
-      <button class="tab-btn" data-tab="avatar">Avatar</button>
-      <button class="tab-btn" data-tab="messages">Messages</button>
-      <button class="tab-btn" data-tab="this-room">This Room</button>
-    </div>
-
-    <!-- Watch Body Content -->
-    <div class="watch-body">
-      
-      <!-- PLAY TAB -->
-      <div id="tab-play" class="tab-content active">
-        <!-- Play Sub-Tabs -->
-        <div class="sub-tabs">
-          <button class="sub-tab-btn active" data-subtab="rro">RROs</button>
-          <button class="sub-tab-btn" data-subtab="community">Community</button>
-          <button class="sub-tab-btn" data-subtab="import">Import JSON</button>
-        </div>
-
-        <!-- SUB-TAB 1: RROs -->
-        <div id="subtab-rro" class="subtab-content active">
-          <div class="rro-grid">
-            <div class="rro-card" data-game="paintball">
-              <h4>🔴 Paintball</h4>
-              <p>CTF & TDM</p>
-            </div>
-            <div class="rro-card" data-game="golden-trophy">
-              <h4>🏆 Golden Trophy</h4>
-              <p>Co-op Quest</p>
-            </div>
-            <div class="rro-card" data-game="lost-skulls">
-              <h4>💀 Lost Skulls</h4>
-              <p>Pirate Quest</p>
-            </div>
-            <div class="rro-card" data-game="dodgeball">
-              <h4>🏐 Dodgeball</h4>
-              <p>3v3 Throwing</p>
-            </div>
-            <div class="rro-card" data-game="laser-tag">
-              <h4>🔫 Laser Tag</h4>
-              <p>Sci-Fi Arena</p>
-            </div>
-            <div class="rro-card" data-game="rec-royale">
-              <h4>🪂 Rec Royale</h4>
-              <p>Battle Royale</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- SUB-TAB 2: Community Rooms -->
-        <div id="subtab-community" class="subtab-content">
-          <div class="rro-grid">
-            <div class="rro-card" onclick="location.href='studio.html'">
-              <h4>🛠️ Open JR Studio</h4>
-              <p>Build custom maps</p>
-            </div>
-            <div class="rro-card" data-game="parkour-world">
-              <h4>🧗 ^ParkourWorld</h4>
-              <p>Featured Community Map</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- SUB-TAB 3: Import Map JSON String -->
-        <div id="subtab-import" class="subtab-content">
-          <h3>Load JR Studio Map</h3>
-          <p class="sub-text">Paste a JSON map string exported from JR Studio:</p>
-          <textarea id="json-map-input" placeholder='{"roomName":"My Map","objects":[...]}'></textarea>
-          <button id="load-json-btn">Publish & Load Room</button>
-        </div>
-
-      </div>
-
-      <!-- FRIENDS TAB -->
-      <div id="tab-friends" class="tab-content">
-        <h3>Friends & Party</h3>
-        <p class="sub-text">Your Peer ID: <b id="my-peer-id">Generating...</b></p>
-        <input type="text" id="friend-id-input" placeholder="Enter Friend's Peer ID">
-        <button id="connect-friend-btn">Invite / Connect</button>
-      </div>
-
-      <!-- AVATAR TAB -->
-      <div id="tab-avatar" class="tab-content">
-        <h3>Avatar Customizer</h3>
-        <p class="sub-text">Body Color:</p>
-        <div class="color-picker">
-          <div class="color-swatch" style="background: #ff5722;" data-color="#ff5722"></div>
-          <div class="color-swatch" style="background: #00bcd4;" data-color="#00bcd4"></div>
-          <div class="color-swatch" style="background: #4caf50;" data-color="#4caf50"></div>
-          <div class="color-swatch" style="background: #9c27b0;" data-color="#9c27b0"></div>
-        </div>
-      </div>
-
-      <!-- MESSAGES TAB -->
-      <div id="tab-messages" class="tab-content">
-        <h3>Messages & Activity</h3>
-        <div id="message-log">
-          <p class="log-entry">Welcome to Rec Room Web!</p>
-        </div>
-      </div>
-
-      <!-- THIS ROOM TAB -->
-      <div id="tab-this-room" class="tab-content">
-        <h3>Room Info</h3>
-        <p>Current Room: <b id="current-room-name">Dorm Room</b></p>
-        <p class="sub-text">Players Online: <span id="player-count">1</span></p>
-      </div>
-
-    </div>
+  <div id="controls-hint">
+    [WASD] Walk | [Mouse] Look (Click to Pointer Lock) | [Left Click] Interact | Enter VR for Watch Menu
   </div>
 
-  <!-- A-Frame WebXR Scene -->
-  <a-scene id="scene" webxr="optionalFeatures: hit-test, local-floor;">
-    <a-sky id="sky" color="#87CEEB"></a-sky>
-    <a-ambient-light color="#888"></a-ambient-light>
-    <a-directional-light position="-1 2 1" intensity="0.7"></a-directional-light>
+  <a-scene physics="debug: false; gravity: -9.8">
+    <a-sky color="#61C3FF"></a-sky>
 
-    <!-- Dynamic Level Container -->
-    <a-entity id="environment"></a-entity>
+    <!-- World Content Container -->
+    <a-entity id="world-container"></a-entity>
 
-    <!-- Player Rig -->
-    <a-entity id="rig" position="0 0 0">
-      <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls="acceleration: 15"></a-camera>
-      <a-entity id="left-hand" oculus-touch-controls="hand: left" laser-controls="hand: left"></a-entity>
-      <a-entity id="right-hand" oculus-touch-controls="hand: right" laser-controls="hand: right"></a-entity>
+    <!-- Player Rig with VR Hands -->
+    <a-entity id="rig" movement-controls="fly: false; speed: 0.2" position="0 0 0">
+      <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
+        <a-entity cursor="fuse: false; rayOrigin: mouse" raycaster="objects: .selectable"></a-entity>
+      </a-entity>
+
+      <!-- VR Controllers -->
+      <a-entity id="left-hand" hand-controls="hand: left; handModelStyle: lowPoly; color: #ff5722"></a-entity>
+      <a-entity id="right-hand" hand-controls="hand: right; handModelStyle: lowPoly; color: #ff5722" raycaster="objects: .selectable" laser-controls="hand: right"></a-entity>
     </a-entity>
   </a-scene>
 
-  <script src="js/rro-games.js"></script>
-  <script src="js/app.js"></script>
+  <script>
+    // Boot default game or custom room payload
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+
+      if (roomParam) {
+        try {
+          const raw = decodeURIComponent(roomParam);
+          const parsed = JSON.parse(raw);
+          const world = document.getElementById('world-container');
+          
+          // Floor base
+          const floor = document.createElement('a-plane');
+          floor.setAttribute('position', '0 0.01 0');
+          floor.setAttribute('rotation', '-90 0 0');
+          floor.setAttribute('width', '50');
+          floor.setAttribute('height', '50');
+          floor.setAttribute('color', '#1e293b');
+          floor.setAttribute('static-body', '');
+          world.appendChild(floor);
+
+          parsed.forEach(obj => {
+            const el = document.createElement(`a-${obj.type}`);
+            el.setAttribute('position', obj.position);
+            el.setAttribute('color', obj.color);
+            el.setAttribute('dynamic-body', 'shape: auto');
+            world.appendChild(el);
+          });
+        } catch (e) {
+          console.error("Failed loading custom room:", e);
+          RROGames.loadDodgeball();
+        }
+      } else {
+        RROGames.loadDodgeball();
+      }
+    });
+  </script>
 </body>
 </html>
