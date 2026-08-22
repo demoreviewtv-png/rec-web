@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golden Trophy - Quest Game</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    #hud {
+      position: absolute; top: 15px; left: 15px; z-index: 999;
+      background: rgba(20, 20, 20, 0.85); color: #fff; padding: 15px;
+      border-radius: 10px; border: 2px solid #ffd700; width: 260px;
+    }
+    .btn {
+      background: #ffd700; color: #111; border: none; padding: 8px 12px;
+      font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 8px;
+    }
+    .btn:hover { background: #e6c200; }
+    .btn-studio { background: #007acc; color: white; }
+    .btn-studio:hover { background: #005999; }
+    #stats { font-size: 14px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Game HUD -->
+  <div id="hud">
+    <h2 style="margin:0; color:#ffd700;">Golden Trophy</h2>
+    <div id="status">Connecting to network...</div>
+    <div id="stats">
+      <div>Enemies Remaining: <span id="enemy-count">0</span></div>
+      <div>Gold Earned: <span id="gold-count">0</span></div>
+    </div>
+    <button class="btn" onclick="startQuestStage()">Spawn Goblin Wave</button>
+    
+    <!-- Button to Open Editor -->
+    <a href="./studio.html" style="text-decoration:none;">
+      <button class="btn btn-studio">🛠️ Open Room Editor</button>
+    </a>
+  </div>
+
+  <a-scene embedded vr-mode-ui="enabled: true">
+    <a-sky color="#1a0f2e"></a-sky>
+    <a-ambient-light color="#444"></a-ambient-light>
+    <a-point-light position="0 5 0" intensity="0.8" color="#fff8d6"></a-point-light>
+
+    <!-- Dungeon Floor & Walls -->
+    <a-plane position="0 0 -10" rotation="-90 0 0" width="30" height="40" color="#2b2b2b"></a-plane>
+    <a-box position="-15 2.5 -10" width="1" height="5" depth="40" color="#1c1c1c"></a-box>
+    <a-box position="15 2.5 -10" width="1" height="5" depth="40" color="#1c1c1c"></a-box>
+    <a-box id="zone-gate" position="0 2.5 -29" width="8" height="5" depth="0.5" color="#8b0000"></a-box>
+
+    <!-- Weapon Rack -->
+    <a-entity id="weapon-rack" position="0 0 -2">
+      <a-box id="sword" position="-1 1 0" width="0.1" height="0.8" depth="0.1" color="#c0c0c0" class="clickable" onclick="equipWeapon('sword')">
+        <a-box position="0 -0.3 0" width="0.3" height="0.05" depth="0.1" color="#8b4513"></a-box>
+      </a-box>
+      <a-torus id="bow" position="1 1 0" radius="0.3" radius-tubular="0.02" arc="180" rotation="0 0 -90" color="#8b4513" class="clickable" onclick="equipWeapon('bow')"></a-torus>
+    </a-entity>
+
+    <!-- Player Rig -->
+    <a-entity id="rig" position="0 0 0">
+      <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls>
+        <a-cursor raycaster="objects: .clickable" color="#ffd700"></a-cursor>
+        <a-entity id="held-weapon" position="0.3 -0.2 -0.5" class="clickable" onclick="shootWeapon()"></a-entity>
+      </a-camera>
+      <a-entity laser-controls="hand: left"></a-entity>
+      <a-entity laser-controls="hand: right"></a-entity>
+    </a-entity>
+
+    <a-entity id="projectiles-container"></a-entity>
+    <a-entity id="players-container"></a-entity>
+    <a-entity id="enemies-container"></a-entity>
+  </a-scene>
+
+  <script type="module" src="./js/firebase.js"></script>
+  <script src="./js/game.js"></script>
+</body>
+</html>
