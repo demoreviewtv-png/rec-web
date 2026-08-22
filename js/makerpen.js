@@ -1,224 +1,280 @@
+// MakerPen: the player's build tool. Shared by the hub (index.html) and the
+// dedicated Studio page. Everything the player spawns lives in #build-container,
+// kept separate from the room geometry in #world-container so switching rooms
+// never wipes (or ink-counts) a player's own creations.
 const MakerPen = {
-  activeTool: 'create',
-  mapEntities: {},
-  circuits: {},
-  MAX_INK: 50,
+  activeTool: 'grab',
+  entities: {},
+  heldId: null,
+  wireSource: null,
+  MAX_INK: 40,
+  GRAVITY: -9.8,
 
   init() {
     this.enforcePCOnly();
-    this.startCircuitLoop();
+    this.startLoop();
   },
 
   enforcePCOnly() {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-    if (isMobile || (hasTouch && window.innerWidth < 1024)) {
-      const block = document.getElementById('pc-only-block');
-      if (block) block.style.display = 'flex';
+    const block = document.getElementById('pc-only-block');
+    if (!block) return; // only present on the Studio page
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isMobileUA || (isTouch && window.innerWidth < 1024)) {
+      block.style.display = 'flex';
     }
   },
 
-  setTool(toolName) {
-    this.activeTool = toolName;
-    document.querySelectorAll('.btn-tool').forEach(btn => btn.classList.remove('active'));
-    const targetBtn = document.getElementById(`tool-${toolName}`);
-    if (targetBtn) targetBtn.classList.add('active');
+  setTool(tool) {
+    if (this.heldId) this.dropObject();
+    this.wireSource = null;
+    this.activeTool = tool;
+    document.querySelectorAll('.btn-tool').forEach((btn) => btn.classList.remove('active'));
+    const btn = document.getElementById(`tool-${tool}`);
+    if (btn) btn.classList.add('active');
   },
 
-  updateInkMeter() {
-    const count = Object.keys(this.mapEntities).length;
+  updateInk() {
+    const count = Object.keys(this.entities).length;
     const pct = Math.min(100, Math.round((count / this.MAX_INK) * 100));
-    const valText = document.getElementById('ink-val');
-    const fillBar = document.getElementById('ink-fill');
-
-    if (valText) valText.innerText = `${pct}%`;
-    if (fillBar) fillBar.style.width = `${pct}%`;
+    const val = document.getElementById('ink-val');
+    const fill = document.getElementById('ink-fill');
+    if (val) val.innerText = `${pct}%`;
+    if (fill) fill.style.width = `${pct}%`;
   },
 
-  // Calculate spawn position 2.5m in front of camera
+  getBuildContainer() {
+    let c = document.getElementById('build-container');
+    if (!c) {
+      c = document.createElement('a-entity');
+      c.setAttribute('id', 'build-container');
+      document.querySelector('a-scene').appendChild(c);
+    }
+    return c;
+  },
+
   getSpawnPosition() {
-    const cameraEl = document.getElementById('camera');
-    const worldPos = new THREE.Vector3();
-    cameraEl.object3D.getWorldPosition(worldPos);
-
-    const worldDir = new THREE.Vector3();
-    cameraEl.object3D.getWorldDirection(worldDir);
-
-    const spawnPos = worldPos.add(worldDir.multiplyScalar(-2.5));
-    return `${spawnPos.x.toFixed(2)} ${Math.max(0.5, spawnPos.y).toFixed(2)} ${spawnPos.z.toFixed(2)}`;
+    const cam = document.getElementById('camera');
+    const pos = new THREE.Vector3();
+    const dir = new THREE.Vector3();
+    cam.object3D.getWorldPosition(pos);
+    cam.object3D.getWorldDirection(dir);
+    const spawn = pos.add(dir.multiplyScalar(2.5));
+    return `${spawn.x.toFixed(2)} ${Math.max(0.5, spawn.y).toFixed(2)} ${spawn.z.toFixed(2)}`;
   },
 
-  // Spawn standard geometric shapes
   spawnShape() {
-    if (Object.keys(this.mapEntities).length >= this.MAX_INK) {
-      alert("Room Ink Limit Reached!");
+    if (Object.keys(this.entities).length >= this.MAX_INK) {
+      this.notify('Room ink is full — delete something to make room.');
       return;
     }
-
     const type = document.getElementById('shape-select').value;
     const color = document.getElementById('color-select').value;
     const id = 'obj_' + Date.now();
-    const position = this.getSpawnPosition();
-
-    this.instantiateEntity({ id, type, color, position, entityType: 'prop' });
+    this.instantiate({ id, type, color, position: this.getSpawnPosition(), kind: 'prop' });
   },
 
-  // Spawn Rec Room Gizmos & Circuit Chips
   spawnGizmo(gizmoType) {
-    if (Object.keys(this.mapEntities).length >= this.MAX_INK) {
-      alert("Room Ink Limit Reached!");
+    if (Object.keys(this.entities).length >= this.MAX_INK) {
+      this.notify('Room ink is full — delete something to make room.');
       return;
     }
-
     const id = 'gizmo_' + Date.now();
     const position = this.getSpawnPosition();
-
     if (gizmoType === 'rotator') {
-      this.instantiateEntity({
-        id,
-        type: 'cylinder',
-        color: '#0284c7',
-        position,
-        entityType: 'rotator',
-        speed: 45 // Degrees per second
-      });
-    } else if (gizmoType === 'trigger') {
-      this.instantiateEntity({
-        id,
-        type: 'box',
-        color: '#38bdf8',
-        position,
-        entityType: 'trigger',
-        opacity: 0.4
-      });
+      this.instantiate({ id, type: 'cylinder', color: '#0284c7', position, kind: 'rotator', speed: 45 });
+    } else {
+      this.instantiate({ id, type: 'box', color: '#38bdf8', position, kind: 'trigger', opacity: 0.4 });
     }
   },
 
-  instantiateEntity(data) {
-    const container = document.getElementById('world-container');
-    if (!container) return;
-
+  instantiate(data) {
+    const container = this.getBuildContainer();
     const el = document.createElement(`a-${data.type}`);
     el.setAttribute('id', data.id);
-    el.setAttribute('class', 'selectable');
+    el.setAttribute('class', 'selectable buildable');
     el.setAttribute('position', data.position);
     el.setAttribute('color', data.color);
 
-    if (data.entityType === 'trigger') {
-      el.setAttribute('material', `color: ${data.color}; transparent: true; opacity: ${data.opacity}`);
-      el.setAttribute('geometry', 'width: 2; height: 2; depth: 2');
-    } else if (data.entityType === 'rotator') {
-      el.setAttribute('geometry', 'radius: 0.3; height: 0.4');
-      
-      // Visual indicator arrow on rotator gizmo
+    if (data.kind === 'trigger') {
+      el.setAttribute('width', 1.2);
+      el.setAttribute('height', 1.2);
+      el.setAttribute('depth', 1.2);
+      el.setAttribute('transparent', true);
+      el.setAttribute('opacity', data.opacity);
+    } else if (data.kind === 'rotator') {
+      el.setAttribute('radius', 0.3);
+      el.setAttribute('height', 0.35);
       const pin = document.createElement('a-box');
-      pin.setAttribute('position', '0 0.25 0.2');
-      pin.setAttribute('width', '0.1');
-      pin.setAttribute('height', '0.1');
-      pin.setAttribute('depth', '0.3');
+      pin.setAttribute('position', '0 0.22 0.15');
+      pin.setAttribute('width', 0.08);
+      pin.setAttribute('height', 0.08);
+      pin.setAttribute('depth', 0.25);
       pin.setAttribute('color', '#facc15');
       el.appendChild(pin);
     } else {
-      el.setAttribute('dynamic-body', 'shape: auto');
+      el.setAttribute('scale', '0.55 0.55 0.55');
+      data.velocityY = 0;
     }
 
-    el.addEventListener('click', () => this.handleInteraction(data.id));
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.handleInteraction(data.id);
+    });
 
     container.appendChild(el);
-    this.mapEntities[data.id] = data;
-    this.updateInkMeter();
+    this.entities[data.id] = data;
+    this.updateInk();
   },
 
   handleInteraction(id) {
     const el = document.getElementById(id);
     if (!el) return;
 
-    if (this.activeTool === 'delete') {
-      el.remove();
-      delete this.mapEntities[id];
-      this.updateInkMeter();
-    } else if (this.activeTool === 'recolor') {
-      const newColor = document.getElementById('color-select').value;
-      el.setAttribute('color', newColor);
-      this.mapEntities[id].color = newColor;
-    } else if (this.activeTool === 'move') {
-      const currentPos = el.getAttribute('position');
-      el.setAttribute('position', `${currentPos.x} ${currentPos.y + 0.5} ${currentPos.z - 0.5}`);
-    } else if (this.activeTool === 'wire') {
-      this.wireCircuit(id);
-    }
-  },
-
-  // Wire Gizmo logic linking
-  wireCircuit(targetId) {
-    if (!this.selectedWireSource) {
-      this.selectedWireSource = targetId;
-      alert(`Wire Source Selected: [${targetId}]. Now click another object to wire as child target!`);
-    } else {
-      const sourceEl = document.getElementById(this.selectedWireSource);
-      const targetEl = document.getElementById(targetId);
-
-      if (sourceEl && targetEl && this.selectedWireSource !== targetId) {
-        // Attach target element as child of Rotator/Gizmo source
-        sourceEl.appendChild(targetEl);
-        targetEl.setAttribute('position', '0 1 0'); // Offset on top of gizmo
-        alert(`Successfully wired ${targetId} to ${this.selectedWireSource}!`);
+    switch (this.activeTool) {
+      case 'grab':
+        if (this.heldId === id) this.dropObject();
+        else this.grabObject(id);
+        break;
+      case 'delete':
+        if (this.heldId === id) this.heldId = null;
+        el.remove();
+        delete this.entities[id];
+        this.updateInk();
+        break;
+      case 'recolor': {
+        const color = document.getElementById('color-select').value;
+        el.setAttribute('color', color);
+        if (this.entities[id]) this.entities[id].color = color;
+        break;
       }
-      this.selectedWireSource = null;
+      case 'wire':
+        this.wireCircuit(id);
+        break;
     }
   },
 
-  // Execution engine loop for Rotators and Trigger Volume detection
-  startCircuitLoop() {
-    let lastTime = performance.now();
+  grabObject(id) {
+    if (this.heldId) this.dropObject();
+    const el = document.getElementById(id);
+    const hold = document.getElementById('hold-node');
+    if (!el || !hold) return;
+    this.heldId = id;
+    this.entities[id].isHeld = true;
+    hold.appendChild(el);
+    el.setAttribute('position', '0 0 0');
+  },
+
+  dropObject() {
+    if (!this.heldId) return;
+    const id = this.heldId;
+    const el = document.getElementById(id);
+    const container = this.getBuildContainer();
+    if (el && container) {
+      const world = new THREE.Vector3();
+      el.object3D.getWorldPosition(world);
+      container.appendChild(el);
+      el.setAttribute('position', `${world.x} ${world.y} ${world.z}`);
+      if (this.entities[id]) {
+        this.entities[id].isHeld = false;
+        this.entities[id].velocityY = 0;
+      }
+    }
+    this.heldId = null;
+  },
+
+  wireCircuit(targetId) {
+    if (!this.wireSource) {
+      this.wireSource = targetId;
+      this.notify('Wire source selected — now click a second object to link it.');
+    } else if (this.wireSource !== targetId) {
+      const sourceEl = document.getElementById(this.wireSource);
+      const targetEl = document.getElementById(targetId);
+      if (sourceEl && targetEl) {
+        sourceEl.appendChild(targetEl);
+        targetEl.setAttribute('position', '0 0.6 0');
+        this.notify('Wired! The two objects are now linked together.');
+      }
+      this.wireSource = null;
+    } else {
+      this.wireSource = null;
+    }
+  },
+
+  clearBuild() {
+    const c = document.getElementById('build-container');
+    if (c) c.innerHTML = '';
+    this.entities = {};
+    this.heldId = null;
+    this.wireSource = null;
+    this.updateInk();
+  },
+
+  publishRoom() {
+    const payload = JSON.stringify(Object.values(this.entities));
+    try {
+      localStorage.setItem('rec_room_my_build', payload);
+      this.notify('Build saved! Reopen the hub to see it waiting for you.');
+    } catch (err) {
+      this.notify('Could not save — your browser storage may be full or blocked.');
+    }
+  },
+
+  notify(msg) {
+    const toast = document.getElementById('toast');
+    if (!toast) { alert(msg); return; }
+    toast.innerText = msg;
+    toast.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+  },
+
+  startLoop() {
+    let last = performance.now();
 
     const tick = (now) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
 
-      const playerCam = document.getElementById('camera');
       let playerPos = null;
-      if (playerCam) {
+      const cam = document.getElementById('camera');
+      if (cam) {
         playerPos = new THREE.Vector3();
-        playerCam.object3D.getWorldPosition(playerPos);
+        cam.object3D.getWorldPosition(playerPos);
       }
 
-      Object.values(this.mapEntities).forEach(entity => {
-        const el = document.getElementById(entity.id);
+      Object.values(this.entities).forEach((data) => {
+        const el = document.getElementById(data.id);
         if (!el) return;
 
-        // Rotator Gizmo Rotation Logic
-        if (entity.entityType === 'rotator') {
-          const currentRot = el.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
-          el.setAttribute('rotation', `${currentRot.x} ${(currentRot.y + entity.speed * dt) % 360} ${currentRot.z}`);
+        if (data.kind === 'prop' && !data.isHeld) {
+          const pos = el.getAttribute('position');
+          const minY = 0.3;
+          if (pos.y > minY) {
+            data.velocityY = (data.velocityY || 0) + this.GRAVITY * dt;
+            let newY = pos.y + data.velocityY * dt;
+            if (newY <= minY) { newY = minY; data.velocityY = 0; }
+            el.setAttribute('position', `${pos.x} ${newY} ${pos.z}`);
+          }
         }
 
-        // Trigger Zone Detection Logic
-        if (entity.entityType === 'trigger' && playerPos) {
-          const triggerPos = new THREE.Vector3();
-          el.object3D.getWorldPosition(triggerPos);
+        if (data.kind === 'rotator') {
+          const rot = el.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
+          el.setAttribute('rotation', `${rot.x} ${(rot.y + data.speed * dt) % 360} ${rot.z}`);
+        }
 
-          const distance = playerPos.distanceTo(triggerPos);
-          if (distance < 1.5) {
-            el.setAttribute('material', 'color: #ef4444; transparent: true; opacity: 0.6');
-          } else {
-            el.setAttribute('material', `color: ${entity.color}; transparent: true; opacity: 0.4`);
-          }
+        if (data.kind === 'trigger' && playerPos) {
+          const tp = new THREE.Vector3();
+          el.object3D.getWorldPosition(tp);
+          const near = playerPos.distanceTo(tp) < 1.4;
+          el.setAttribute('opacity', near ? 0.65 : data.opacity);
+          el.setAttribute('color', near ? '#ef4444' : data.color);
         }
       });
 
       requestAnimationFrame(tick);
     };
-
     requestAnimationFrame(tick);
-  },
-
-  publishRoom() {
-    const payload = JSON.stringify(Object.values(this.mapEntities));
-    localStorage.setItem('my_custom_room', payload);
-    alert('Room & Circuits saved! Launching Main Game...');
-    window.location.href = `index.html?room=${encodeURIComponent(payload)}`;
   }
 };
 
