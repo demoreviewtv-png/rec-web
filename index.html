@@ -2,77 +2,101 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <title>Rec Room Web - Universal Engine</title>
 
   <style>
     :root {
       --rr-orange: #ff5722;
-      --rr-blue: #0284c7;
       --rr-dark: #0f172a;
     }
 
-    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
 
     #crosshair {
-      position: absolute; top: 50%; left: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      width: 10px; height: 10px;
+      width: 10px;
+      height: 10px;
       border: 2px solid #ffffff;
       background: var(--rr-orange);
       border-radius: 50%;
-      z-index: 9998; pointer-events: none;
+      z-index: 9998;
+      pointer-events: none;
     }
 
     #hud-overlay {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      z-index: 9990; background: rgba(15, 23, 42, 0.85); color: white;
-      padding: 10px 20px; border-radius: 30px; font-size: 0.85rem;
-      border: 1px solid #334155; text-align: center; pointer-events: none;
-    }
-
-    /* Mobile Joystick Overlay */
-    .mobile-controls {
-      display: none; position: absolute; bottom: 30px; left: 30px;
-      z-index: 9999; width: 120px; height: 120px;
-      background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 50%; touch-action: none;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9990;
+      background: rgba(15, 23, 42, 0.85);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      border: 1px solid #334155;
+      text-align: center;
+      pointer-events: none;
     }
   </style>
 
-  <!-- Load A-Frame Base Engine -->
+  <!-- Load official stable A-Frame build -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <!-- Load A-Frame Extras for Universal Movement -->
-  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 </head>
 <body>
 
   <div id="crosshair"></div>
-  <div id="hud-overlay">Click screen to capture mouse | VR Mode: Click 'VR' button below</div>
+  <div id="hud-overlay">Click canvas to lock mouse for WASD look | WebXR VR ready</div>
 
-  <a-scene embedded webxr="optionalFeatures: hit-test, local-floor;" renderer="antialias: true; colorManagement: true;">
+  <!-- Scene configured for cross-platform WebXR & Desktop PC rendering -->
+  <a-scene 
+    webxr="optionalFeatures: hit-test, local-floor;"
+    renderer="antialias: true; colorManagement: true;"
+    vr-mode-ui="enabled: true">
+    
     <a-sky color="#61C3FF"></a-sky>
 
-    <!-- World Floor -->
+    <!-- Floor Plane -->
     <a-plane position="0 0 0" rotation="-90 0 0" width="100" height="100" color="#1e293b"></a-plane>
 
-    <!-- Interactive Game Objects -->
+    <!-- World Objects -->
     <a-entity id="world-container">
-      <a-box id="target-1" class="selectable" position="-1.5 1 -4" color="#ff5722" animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear"></a-box>
-      <a-sphere id="target-2" class="selectable" position="0 1.2 -4" radius="0.6" color="#0284c7"></a-sphere>
-      <a-cylinder id="target-3" class="selectable" position="1.5 1 -4" radius="0.4" height="1.2" color="#22c55e"></a-cylinder>
+      <a-box class="selectable" position="-1.5 1 -4" color="#ff5722" animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear"></a-box>
+      <a-sphere class="selectable" position="0 1.2 -4" radius="0.6" color="#0284c7"></a-sphere>
+      <a-cylinder class="selectable" position="1.5 1 -4" radius="0.4" height="1.2" color="#22c55e"></a-cylinder>
     </a-entity>
 
-    <!-- Player Rig: PC, Mobile, and WebXR VR Compatible -->
-    <a-entity id="rig" movement-controls="fly: false; speed: 0.25" position="0 0 0">
-      <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: false">
+    <!-- Native A-Frame Camera Rig (No external movement plugin dependency) -->
+    <a-entity id="rig" position="0 0 0">
+      <a-entity id="camera" 
+                camera 
+                position="0 1.6 0" 
+                look-controls="pointerLockEnabled: true; reverseMouseDrag: false" 
+                wasd-controls="acceleration: 30; fly: false">
         <a-cursor fuse="false" raycaster="objects: .selectable" color="#ff5722"></a-cursor>
       </a-entity>
 
-      <!-- VR Controllers with Hand Models -->
-      <a-entity id="left-hand" hand-controls="hand: left" laser-controls="hand: left" raycaster="objects: .selectable"></a-entity>
-      <a-entity id="right-hand" hand-controls="hand: right" laser-controls="hand: right" raycaster="objects: .selectable"></a-entity>
+      <!-- WebXR Laser Controllers -->
+      <a-entity laser-controls="hand: left" raycaster="objects: .selectable"></a-entity>
+      <a-entity laser-controls="hand: right" raycaster="objects: .selectable"></a-entity>
     </a-entity>
   </a-scene>
 
@@ -82,23 +106,18 @@
       const hud = document.getElementById('hud-overlay');
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-      // 1. Mobile Controls Handling
       if (isMobile) {
-        hud.innerText = "Drag screen to look around | Tap objects to interact";
+        hud.innerText = "Touch and drag screen to look around | Tap objects to interact";
       }
 
-      // 2. Safe PC Pointer Lock
+      // Ensure WASD input focus is maintained when clicking canvas
       scene.addEventListener('click', () => {
-        if (!isMobile && !scene.is('vr-mode') && document.pointerLockElement !== scene) {
-          try {
-            scene.requestPointerLock();
-          } catch (e) {
-            console.warn("Pointer lock blocked:", e);
-          }
+        if (scene.canvas) {
+          scene.canvas.focus();
         }
       });
 
-      // 3. WebXR VR Mode Listeners
+      // Handle WebXR VR Mode UI transitions cleanly
       scene.addEventListener('enter-vr', () => {
         hud.style.display = 'none';
         document.getElementById('crosshair').style.display = 'none';
@@ -109,11 +128,12 @@
         document.getElementById('crosshair').style.display = 'block';
       });
 
-      // 4. Click interaction handler for game targets
+      // Object interaction handler
       document.querySelectorAll('.selectable').forEach(el => {
         el.addEventListener('click', () => {
+          const originalColor = el.getAttribute('color');
           el.setAttribute('material', 'color', '#facc15');
-          setTimeout(() => el.setAttribute('material', 'color', el.getAttribute('color')), 300);
+          setTimeout(() => el.setAttribute('material', 'color', originalColor), 300);
         });
       });
     });
