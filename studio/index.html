@@ -2,127 +2,102 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JR Studio - Rec Room Map Maker</title>
+  <title>JR Studio - Live Host Editor</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <!-- PeerJS for direct browser-to-browser P2P -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; }
     #editor-panel {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      z-index: 9999;
-      background: rgba(26, 32, 44, 0.95);
-      color: white;
-      padding: 15px;
-      border-radius: 12px;
-      width: 290px;
-      border: 2px solid #ff5722;
+      position: absolute; top: 15px; left: 15px; z-index: 9999;
+      background: rgba(26, 32, 44, 0.95); color: white; padding: 15px;
+      border-radius: 12px; width: 290px; font-family: sans-serif;
     }
-    input, select, button, textarea {
-      width: 100%;
-      margin: 5px 0;
-      padding: 8px;
-      box-sizing: border-box;
-      border-radius: 4px;
-      border: none;
-    }
-    button { background: #ff5722; color: white; font-weight: bold; cursor: pointer; }
-    button:hover { background: #e64a19; }
-    textarea { height: 70px; font-family: monospace; font-size: 10px; }
+    .room-code { background: #2b6cb0; padding: 8px; border-radius: 4px; font-weight: bold; text-align: center; }
+    button { width: 100%; margin: 5px 0; padding: 8px; background: #ff5722; color: white; border: none; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
 
   <div id="editor-panel">
-    <h2>🛠️ JR Studio</h2>
-    <label>Room Name:</label>
-    <input type="text" id="map-name" value="My Custom Room">
+    <h2>🛠️ JR Studio (Host)</h2>
+    <div>Room Code: <div id="host-id" class="room-code">Generating...</div></div>
     
     <hr>
     
-    <h3>Add Object</h3>
-    <select id="shape-type">
-      <option value="box">Cube (Box)</option>
-      <option value="sphere">Sphere</option>
-      <option value="cylinder">Cylinder</option>
-      <option value="plane">Floor Plane</option>
-    </select>
-    
-    <label>Color:</label>
-    <input type="color" id="shape-color" value="#ff5722">
-    
-    <label>Position (X Y Z):</label>
-    <div style="display:flex; gap:4px;">
-      <input type="number" id="pos-x" value="0" step="0.5">
-      <input type="number" id="pos-y" value="1" step="0.5">
-      <input type="number" id="pos-z" value="-5" step="0.5">
-    </div>
-
-    <button id="add-object-btn">Spawn Object</button>
-
-    <hr>
-
-    <button id="export-json-btn">Export JSON</button>
-    <textarea id="output-json" readonly placeholder="Export string will appear here..."></textarea>
-    
-    <button id="publish-game-btn" style="background: #38a169;">🚀 Publish to Game</button>
-    <button onclick="location.href='/'" style="background:#4a5568;">Back to Main Game</button>
+    <button id="add-box-btn">Spawn Box</button>
+    <button onclick="location.href='./'" style="background:#4a5568;">Back to Main Game</button>
   </div>
 
-  <a-scene id="studio-scene">
+  <a-scene>
     <a-sky color="#61C3FF"></a-sky>
     <a-plane position="0 0 0" rotation="-90 0 0" width="40" height="40" color="#2d3748"></a-plane>
     <a-entity id="builder-container"></a-entity>
     
-    <a-entity position="0 1.6 0">
-      <a-camera look-controls wasd-controls></a-camera>
-    </a-entity>
+    <!-- Editor Camera -->
+    <a-entity position="0 1.6 0" camera look-controls wasd-controls></a-entity>
   </a-scene>
 
   <script>
-    const mapObjects = [];
+    const connectedPeers = [];
+    
+    // 1. Initialize Host Peer
+    const peer = new Peer();
 
-    document.getElementById('add-object-btn').addEventListener('click', () => {
-      const type = document.getElementById('shape-type').value;
-      const color = document.getElementById('shape-color').value;
-      const x = document.getElementById('pos-x').value;
-      const y = document.getElementById('pos-y').value;
-      const z = document.getElementById('pos-z').value;
-
-      const objData = { type, color, position: `${x} ${y} ${z}` };
-      mapObjects.push(objData);
-
-      const container = document.getElementById('builder-container');
-      const el = document.createElement(`a-${type}`);
-      el.setAttribute('position', objData.position);
-      el.setAttribute('color', color);
-      if (type === 'plane') el.setAttribute('rotation', '-90 0 0');
-      container.appendChild(el);
+    peer.on('open', (id) => {
+      document.getElementById('host-id').innerText = id;
     });
 
-    function generateJSON() {
-      const roomName = document.getElementById('map-name').value;
-      return JSON.stringify({
-        roomName: roomName || "CustomRoom",
-        skyColor: "#61C3FF",
-        objects: mapObjects
+    // 2. Handle incoming client connections
+    peer.on('connection', (conn) => {
+      connectedPeers.push(conn);
+
+      conn.on('data', (data) => {
+        if (data.type === 'PLAYER_MOVE') {
+          updateRemotePlayer(conn.peer, data.position);
+        }
       });
+
+      conn.on('close', () => {
+        removeRemotePlayer(conn.peer);
+      });
+    });
+
+    // 3. Broadcast spawned objects to all connected players
+    document.getElementById('add-box-btn').addEventListener('click', () => {
+      const objData = { type: 'box', color: '#ff5722', position: '0 1 -4' };
+      
+      // Render on host
+      renderObject(objData);
+
+      // Broadcast to players connected to editor's PC
+      connectedPeers.forEach(conn => {
+        conn.send({ type: 'SPAWN_OBJECT', data: objData });
+      });
+    });
+
+    function renderObject(data) {
+      const el = document.createElement(`a-${data.type}`);
+      el.setAttribute('position', data.position);
+      el.setAttribute('color', data.color);
+      document.getElementById('builder-container').appendChild(el);
     }
 
-    document.getElementById('export-json-btn').addEventListener('click', () => {
-      const jsonString = generateJSON();
-      document.getElementById('output-json').value = jsonString;
-      navigator.clipboard.writeText(jsonString);
-      alert("Copied Map JSON string to clipboard!");
-    });
+    function updateRemotePlayer(peerId, pos) {
+      let player = document.getElementById(`player-${peerId}`);
+      if (!player) {
+        player = document.createElement('a-sphere');
+        player.id = `player-${peerId}`;
+        player.setAttribute('radius', '0.4');
+        player.setAttribute('color', '#38a169');
+        document.querySelector('a-scene').appendChild(player);
+      }
+      player.setAttribute('position', pos);
+    }
 
-    // Publish map directly back to main game route
-    document.getElementById('publish-game-btn').addEventListener('click', () => {
-      const jsonString = generateJSON();
-      const encodedJSON = encodeURIComponent(jsonString);
-      // Redirects to root domain with room query
-      window.location.href = `/?room=${encodedJSON}`;
-    });
+    function removeRemotePlayer(peerId) {
+      const player = document.getElementById(`player-${peerId}`);
+      if (player) player.remove();
+    }
   </script>
 </body>
 </html>
