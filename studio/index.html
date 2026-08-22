@@ -2,102 +2,222 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JR Studio - Live Host Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JR Studio - Rec Room Maker Pen</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <!-- PeerJS for direct browser-to-browser P2P -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
-    #editor-panel {
-      position: absolute; top: 15px; left: 15px; z-index: 9999;
-      background: rgba(26, 32, 44, 0.95); color: white; padding: 15px;
-      border-radius: 12px; width: 290px; font-family: sans-serif;
+    :root {
+      --rr-orange: #ff5722;
+      --rr-dark-orange: #e64a19;
+      --rr-bg: #2d3748;
+      --rr-card: #1a202c;
     }
-    .room-code { background: #2b6cb0; padding: 8px; border-radius: 4px; font-weight: bold; text-align: center; }
-    button { width: 100%; margin: 5px 0; padding: 8px; background: #ff5722; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* Maker Pen Floating UI */
+    #maker-pen-ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 9999;
+      background: var(--rr-card);
+      color: white;
+      padding: 18px;
+      border-radius: 16px;
+      width: 320px;
+      border: 3px solid var(--rr-orange);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .rr-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #3a4a5e;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .rr-title { font-weight: 800; font-size: 1.2rem; color: #ffffff; }
+    .rr-badge { background: var(--rr-orange); padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+
+    /* Ink Meter Bar */
+    .ink-meter-container { margin: 10px 0; }
+    .ink-label { font-size: 0.8rem; font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .ink-bar { width: 100%; height: 10px; background: #3a4a5e; border-radius: 5px; overflow: hidden; }
+    .ink-fill { width: 12%; height: 100%; background: linear-gradient(90deg, #ff9800, var(--rr-orange)); transition: width 0.3s; }
+
+    /* Maker Pen Grid Tools */
+    .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
+    .tool-btn {
+      background: #2b3648; border: 2px solid #3a4a5e; color: white; padding: 10px;
+      border-radius: 10px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .tool-btn:hover, .tool-btn.active { background: var(--rr-orange); border-color: var(--rr-dark-orange); }
+
+    input, select {
+      width: 100%; background: #2b3648; color: white; border: 1px solid #3a4a5e;
+      padding: 8px; border-radius: 8px; box-sizing: border-box; margin-bottom: 8px;
+    }
+
+    .room-code-box {
+      background: #0f172a; padding: 8px; border-radius: 8px; text-align: center;
+      font-family: monospace; font-size: 1.1rem; color: #4ade80; border: 1px dashed #34d399;
+    }
   </style>
 </head>
 <body>
 
-  <div id="editor-panel">
-    <h2>🛠️ JR Studio (Host)</h2>
-    <div>Room Code: <div id="host-id" class="room-code">Generating...</div></div>
-    
-    <hr>
-    
-    <button id="add-box-btn">Spawn Box</button>
-    <button onclick="location.href='./'" style="background:#4a5568;">Back to Main Game</button>
+  <div id="maker-pen-ui">
+    <div class="rr-header">
+      <span class="rr-title">📐 MAKER PEN</span>
+      <span class="rr-badge">JR STUDIO</span>
+    </div>
+
+    <!-- Ink Capacity Indicator -->
+    <div class="ink-meter-container">
+      <div class="ink-label"><span>ROOM INK</span><span id="ink-val">12%</span></div>
+      <div class="ink-bar"><div id="ink-fill" class="ink-fill"></div></div>
+    </div>
+
+    <div class="tool-grid">
+      <button class="tool-btn active" id="mode-create">✏️ Create</button>
+      <button class="tool-btn" id="mode-recolor">🎨 Palette</button>
+      <button class="tool-btn" id="mode-delete">🗑️ Delete</button>
+      <button class="tool-btn" id="mode-select">🖐️ Select</button>
+    </div>
+
+    <label style="font-size: 0.8rem; font-weight: bold;">SHAPE SELECTOR</label>
+    <select id="shape-type">
+      <option value="box">Cube (Box)</option>
+      <option value="sphere">Sphere</option>
+      <option value="cylinder">Cylinder</option>
+      <option value="torus">Donut (Torus)</option>
+    </select>
+
+    <label style="font-size: 0.8rem; font-weight: bold;">COLOR PALETTE</label>
+    <input type="color" id="shape-color" value="#ff5722">
+
+    <button class="tool-btn" id="spawn-btn" style="background: var(--rr-orange); width: 100%; margin-top: 5px;">Spawn Object</button>
+
+    <hr style="border-color: #3a4a5e; margin: 15px 0;">
+
+    <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 4px;">LIVE MULTIPLAYER ROOM CODE</div>
+    <div id="host-id" class="room-code-box">CONNECTING...</div>
+
+    <button class="tool-btn" id="publish-btn" style="background: #22c55e; width: 100%; margin-top: 10px;">🚀 Publish Room</button>
+    <button class="tool-btn" onclick="location.href='./'" style="background: #475569; width: 100%; margin-top: 5px;">Leave Studio</button>
   </div>
 
-  <a-scene>
+  <a-scene id="studio-scene">
     <a-sky color="#61C3FF"></a-sky>
-    <a-plane position="0 0 0" rotation="-90 0 0" width="40" height="40" color="#2d3748"></a-plane>
+    <!-- Rec Room Grid Floor -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="50" height="50" color="#1e293b" gridhelper="size: 50; divisions: 50; colorCenterLine: #ff5722; colorGrid: #334155;"></a-plane>
+    
     <a-entity id="builder-container"></a-entity>
     
-    <!-- Editor Camera -->
-    <a-entity position="0 1.6 0" camera look-controls wasd-controls></a-entity>
+    <!-- Player Rig with Rec Room Head/Hands -->
+    <a-entity id="player-rig" position="0 1.6 0">
+      <a-camera look-controls wasd-controls></a-camera>
+    </a-entity>
   </a-scene>
 
   <script>
     const connectedPeers = [];
-    
-    // 1. Initialize Host Peer
+    const spawnedObjects = {};
+    let activeMode = 'create';
+
+    // 1. PeerJS Host Connection
     const peer = new Peer();
-
-    peer.on('open', (id) => {
-      document.getElementById('host-id').innerText = id;
-    });
-
-    // 2. Handle incoming client connections
-    peer.on('connection', (conn) => {
+    peer.on('open', id => document.getElementById('host-id').innerText = id);
+    peer.on('connection', conn => {
       connectedPeers.push(conn);
-
-      conn.on('data', (data) => {
-        if (data.type === 'PLAYER_MOVE') {
-          updateRemotePlayer(conn.peer, data.position);
-        }
+      conn.on('data', data => {
+        if (data.type === 'PLAYER_MOVE') updateRemotePlayer(conn.peer, data.position);
       });
-
-      conn.on('close', () => {
-        removeRemotePlayer(conn.peer);
-      });
+      conn.on('close', () => removeRemotePlayer(conn.peer));
     });
 
-    // 3. Broadcast spawned objects to all connected players
-    document.getElementById('add-box-btn').addEventListener('click', () => {
-      const objData = { type: 'box', color: '#ff5722', position: '0 1 -4' };
-      
-      // Render on host
-      renderObject(objData);
+    function broadcast(payload) {
+      connectedPeers.forEach(conn => { if (conn.open) conn.send(payload); });
+    }
 
-      // Broadcast to players connected to editor's PC
-      connectedPeers.forEach(conn => {
-        conn.send({ type: 'SPAWN_OBJECT', data: objData });
-      });
+    // 2. Spawn & Sync Entities with Unique IDs
+    document.getElementById('spawn-btn').addEventListener('click', () => {
+      const type = document.getElementById('shape-type').value;
+      const color = document.getElementById('shape-color').value;
+      const id = 'obj_' + Date.now();
+      const objData = { id, type, color, position: '0 1 -4' };
+
+      renderObject(objData);
+      broadcast({ type: 'SPAWN_OBJECT', data: objData });
+      updateInkMeter();
     });
 
     function renderObject(data) {
       const el = document.createElement(`a-${data.type}`);
+      el.setAttribute('id', data.id);
       el.setAttribute('position', data.position);
       el.setAttribute('color', data.color);
+      
+      el.addEventListener('click', () => {
+        if (activeMode === 'delete') {
+          el.remove();
+          delete spawnedObjects[data.id];
+          broadcast({ type: 'DELETE_OBJECT', id: data.id });
+          updateInkMeter();
+        } else if (activeMode === 'recolor') {
+          const newColor = document.getElementById('shape-color').value;
+          el.setAttribute('color', newColor);
+          broadcast({ type: 'MOVE_OBJECT', id: data.id, color: newColor, position: data.position });
+        }
+      });
+
       document.getElementById('builder-container').appendChild(el);
+      spawnedObjects[data.id] = el;
     }
 
+    function updateInkMeter() {
+      const count = Object.keys(spawnedObjects).length;
+      const pct = Math.min(100, Math.round((count / 50) * 100));
+      document.getElementById('ink-val').innerText = pct + '%';
+      document.getElementById('ink-fill').style.width = pct + '%';
+    }
+
+    // Rec Room Stylized Player Bean Rendering
     function updateRemotePlayer(peerId, pos) {
       let player = document.getElementById(`player-${peerId}`);
       if (!player) {
-        player = document.createElement('a-sphere');
+        player = document.createElement('a-entity');
         player.id = `player-${peerId}`;
-        player.setAttribute('radius', '0.4');
-        player.setAttribute('color', '#38a169');
+        player.innerHTML = `
+          <!-- Rec Room Floating Head -->
+          <a-sphere position="0 0.5 0" radius="0.3" color="#ff5722"></a-sphere>
+          <!-- Floating Torso -->
+          <a-cone position="0 0 0" radius-bottom="0.25" radius-top="0.15" height="0.6" color="#ffffff"></a-cone>
+        `;
         document.querySelector('a-scene').appendChild(player);
       }
       player.setAttribute('position', pos);
     }
 
     function removeRemotePlayer(peerId) {
-      const player = document.getElementById(`player-${peerId}`);
-      if (player) player.remove();
+      const p = document.getElementById(`player-${peerId}`);
+      if (p) p.remove();
     }
+
+    // Publish map back to main game
+    document.getElementById('publish-btn').addEventListener('click', () => {
+      const roomData = Object.values(spawnedObjects).map(el => ({
+        type: el.tagName.toLowerCase().replace('a-', ''),
+        color: el.getAttribute('color'),
+        position: el.getAttribute('position')
+      }));
+      const json = encodeURIComponent(JSON.stringify({ objects: roomData }));
+      window.location.href = `./?room=${json}`;
+    });
   </script>
 </body>
 </html>
