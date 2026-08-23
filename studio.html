@@ -3,143 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rec Engine - Studio Editor & VR</title>
-
+  <title>Rec Engine - Studio Editor</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #181818; color: #eee; user-select: none; }
-
-    #editor-layout {
-      display: grid;
-      grid-template-columns: 240px 1fr 300px;
-      grid-template-rows: 48px 1fr 160px;
-      height: 100vh;
-    }
-
-    #toolbar {
-      grid-column: 1 / -1;
-      background: #252526;
-      border-bottom: 1px solid #3c3c3c;
-      display: flex; align-items: center; padding: 0 12px; gap: 10px;
-    }
-
-    .brand-title { font-weight: 800; color: #ff7700; font-size: 16px; margin-right: 15px; }
-
-    button {
-      background: #333334; color: #fff; border: 1px solid #454545;
-      padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;
-    }
-    button:hover { background: #007acc; border-color: #007acc; }
-
-    .btn-submit { background: #28a745 !important; border-color: #28a745 !important; margin-left: auto; }
-    .btn-submit:hover { background: #218838 !important; }
-
-    #user-profile-chip {
-      display: flex; align-items: center; gap: 8px; background: #1e1e1e;
-      padding: 4px 10px; border-radius: 20px; border: 1px solid #3c3c3c; cursor: pointer;
-    }
-    #user-profile-chip img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background: #ff7700; }
-
-    #hierarchy { background: #1e1e1e; border-right: 1px solid #3c3c3c; padding: 12px; overflow-y: auto; }
-    #viewport-container { position: relative; background: #0a0a0a; grid-column: 2; grid-row: 2; }
-    a-scene { width: 100%; height: 100%; }
-
-    #inspector { background: #1e1e1e; border-left: 1px solid #3c3c3c; padding: 12px; grid-column: 3; grid-row: 2 / -1; overflow-y: auto; }
-
-    .panel-title { font-weight: 700; font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 10px; }
-    .tree-item { padding: 6px 10px; cursor: pointer; border-radius: 4px; font-size: 13px; margin-bottom: 4px; background: #252526; }
-    .tree-item.selected { background: #094771; color: #fff; font-weight: bold; }
-
-    .prop-group { margin-bottom: 15px; background: #252526; padding: 10px; border-radius: 6px; border: 1px solid #333; }
-    .prop-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 12px; }
-    .prop-row label { width: 35%; color: #aaa; }
-    .prop-row input { width: 60%; background: #181818; border: 1px solid #3c3c3c; color: #fff; padding: 5px; border-radius: 3px; }
-
+    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #181818; color: #eee; }
+    #editor-layout { display: grid; grid-template-columns: 240px 1fr 300px; grid-template-rows: 48px 1fr 160px; height: 100vh; }
+    #toolbar { grid-column: 1 / -1; background: #252526; border-bottom: 1px solid #3c3c3c; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+    button { background: #333; color: #fff; border: 1px solid #454545; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    button:hover { background: #007acc; }
+    #hierarchy { background: #1e1e1e; border-right: 1px solid #3c3c3c; padding: 10px; overflow-y: auto; }
+    #viewport-container { grid-column: 2; grid-row: 2; position: relative; }
+    #inspector { background: #1e1e1e; border-left: 1px solid #3c3c3c; padding: 10px; grid-column: 3; grid-row: 2 / -1; }
     #bottom-panel { grid-column: 1 / 3; grid-row: 3; background: #181818; border-top: 1px solid #3c3c3c; padding: 10px; }
-    textarea { width: 100%; height: 95px; background: #111; color: #00ff66; font-family: monospace; border: 1px solid #333; padding: 8px; border-radius: 4px; resize: none; font-size: 11px; }
-
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.85); z-index: 9999;
-      justify-content: center; align-items: center;
-    }
-    .modal-card {
-      position: relative; width: 90%; max-width: 750px; height: 85vh;
-      background: #252526; border-radius: 8px; padding: 20px; border: 1px solid #3c3c3c;
-    }
-    .close-btn { position: absolute; top: 12px; right: 15px; background: #d9534f; border: none; color: #fff; padding: 4px 8px; cursor: pointer; }
-    #form-container { width: 100%; height: 100%; border: none; border-radius: 4px; margin-top: 25px; }
+    textarea { width: 100%; height: 95px; background: #111; color: #00ff66; font-family: monospace; border: 1px solid #333; padding: 8px; resize: none; font-size: 11px; }
+    .tree-item { padding: 5px; cursor: pointer; border-radius: 3px; font-size: 12px; margin-bottom: 2px; background: #252526; }
+    .tree-item.selected { background: #094771; font-weight: bold; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center; }
+    .modal-card { width: 90%; max-width: 750px; height: 85vh; background: #252526; border-radius: 8px; padding: 20px; position: relative; }
   </style>
 </head>
 <body>
 
   <div id="editor-layout">
     <div id="toolbar">
-      <span class="brand-title">REC STUDIO</span>
+      <b style="color:#ff7700;">STUDIO</b>
       <button onclick="createPrimitive('box')">+ Cube</button>
       <button onclick="createPrimitive('sphere')">+ Sphere</button>
-      <button onclick="createPrimitive('cylinder')">+ Cylinder</button>
-      <button onclick="createPrimitive('plane')">+ Plane</button>
-
-      <div id="user-profile-chip">
-        <img id="toolbar-avatar" src="" alt="Avatar">
-        <span id="toolbar-username">RecPlayer</span>
-      </div>
-
-      <button class="btn-submit" onclick="exportAndOpenForm()">Submit to Google Form</button>
-      <button onclick="window.location.href='./index.html'" style="margin-left: 8px;">Back to Game</button>
+      <button onclick="triggerGlbUpload()">+ Import GLB Model</button>
+      <input type="file" id="glb-file-input" accept=".glb" style="display:none" onchange="handleGlbFileSelect(event)">
+      
+      <button style="margin-left:auto; background:#28a745;" onclick="exportAndOpenForm()">Submit to Google Form</button>
+      <button onclick="window.location.href='./index.html'">Back to Game</button>
     </div>
 
-    <div id="hierarchy">
-      <div class="panel-title">Scene Objects</div>
-      <div id="tree-root"></div>
-    </div>
+    <div id="hierarchy"><div id="tree-root"></div></div>
 
     <div id="viewport-container">
-      <a-scene embedded webxr="optionalFeatures: hit-test, local-floor;" vr-mode-ui="enabled: true">
+      <a-scene embedded>
         <a-sky color="#1a1a2e"></a-sky>
-        <a-ambient-light color="#888"></a-ambient-light>
-        <a-directional-light position="2 5 3" intensity="0.8"></a-directional-light>
-        <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#222222" gridhelper="size: 30; divisions: 30;"></a-plane>
-
-        <a-entity id="rig" position="0 0 3" movement-controls="fly: false">
-          <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls>
-            <a-cursor color="#ff7700" raycaster="objects: .selectable"></a-cursor>
-          </a-camera>
-          <a-entity id="leftHand" laser-controls="hand: left" raycaster="objects: .selectable; far: 5"></a-entity>
-          <a-entity id="rightHand" laser-controls="hand: right" raycaster="objects: .selectable; far: 5"></a-entity>
-        </a-entity>
-
+        <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#222" gridhelper="size: 30; divisions: 30;"></a-plane>
+        <a-camera position="0 2 5" look-controls wasd-controls></a-camera>
         <a-entity id="user-scene"></a-entity>
       </a-scene>
     </div>
 
-    <div id="inspector">
-      <div class="panel-title">Room Settings</div>
-      <div class="prop-group">
-        <div class="prop-row"><label>Room Title</label><input type="text" id="room-name" value="Custom Parkour Quest"></div>
-        <div class="prop-row"><label>Creator</label><input type="text" id="room-owner" value="RecPlayer" readonly></div>
-        <div class="prop-row"><label>Description</label><input type="text" id="room-desc" value="A custom level built with Rec Studio!"></div>
-      </div>
-      <div class="panel-title">Inspector</div>
-      <div id="inspector-content"><i>Select an entity to edit.</i></div>
-    </div>
+    <div id="inspector"><div id="inspector-content"><i>Select an item to edit.</i></div></div>
 
     <div id="bottom-panel">
-      <div class="panel-title">Generated JSON Payload</div>
-      <textarea id="code-output" readonly placeholder="Your room JSON payload will appear here..."></textarea>
+      <textarea id="code-output" readonly placeholder="Room payload will appear here..."></textarea>
     </div>
   </div>
 
-  <!-- Updated Google Form Overlay -->
   <div id="form-modal" class="modal-overlay">
     <div class="modal-card">
-      <button class="close-btn" onclick="closeFormModal()">✕ Close</button>
-      <iframe id="form-container" src="https://forms.gle/NdcGi2QNuVUTTE2Z6">Loading Form...</iframe>
+      <button style="position:absolute; top:10px; right:10px; background:#d9534f;" onclick="document.getElementById('form-modal').style.display='none'">✕ Close</button>
+      <iframe src="https://forms.gle/NdcGi2QNuVUTTE2Z6" style="width:100%; height:100%; border:none; margin-top:20px;"></iframe>
     </div>
   </div>
 
@@ -147,37 +67,54 @@
     let sceneObjects = [];
     let selectedObjectId = null;
 
-    let userAccount = JSON.parse(localStorage.getItem("rec_game_account")) || { username: "RecPlayer", seed: "RecPlayer" };
-
-    function initEditor() {
-      document.getElementById("toolbar-username").textContent = userAccount.username;
-      document.getElementById("room-owner").value = userAccount.username;
-      document.getElementById("toolbar-avatar").src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userAccount.seed)}`;
+    // Convert Binary ArrayBuffer to Base256 String for JSON inclusion
+    function bytesToBase256(arrayBuffer) {
+      const bytes = new Uint8Array(arrayBuffer);
+      let binaryStr = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binaryStr += String.fromCharCode(bytes[i]);
+      }
+      return binaryStr;
     }
 
     function createPrimitive(type) {
       const id = "obj_" + Date.now();
-      const userScene = document.getElementById("user-scene");
-
       const entity = document.createElement("a-entity");
       entity.setAttribute("id", id);
       entity.setAttribute("geometry", { primitive: type });
       entity.setAttribute("material", { color: "#ff7700" });
       entity.setAttribute("position", `0 ${1 + sceneObjects.length * 0.2} -2`);
-      entity.classList.add("selectable");
 
-      entity.addEventListener("click", () => selectObject(id));
-      userScene.appendChild(entity);
-
+      document.getElementById("user-scene").appendChild(entity);
       sceneObjects.push({ id, type, entity });
       updateHierarchy();
-      selectObject(id);
     }
 
-    function selectObject(id) {
-      selectedObjectId = id;
-      updateHierarchy();
-      renderInspector();
+    function triggerGlbUpload() { document.getElementById("glb-file-input").click(); }
+
+    function handleGlbFileSelect(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const arrayBuffer = e.target.result;
+        const base256Str = bytesToBase256(arrayBuffer);
+
+        const id = "glb_" + Date.now();
+        const blob = new Blob([arrayBuffer], { type: "model/gltf-binary" });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const entity = document.createElement("a-entity");
+        entity.setAttribute("id", id);
+        entity.setAttribute("gltf-model", blobUrl);
+        entity.setAttribute("position", "0 1 -2");
+
+        document.getElementById("user-scene").appendChild(entity);
+        sceneObjects.push({ id, type: "glb_base256", entity, base256Data: base256Str });
+        updateHierarchy();
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     function updateHierarchy() {
@@ -185,80 +122,28 @@
       root.innerHTML = "";
       sceneObjects.forEach(obj => {
         const item = document.createElement("div");
-        item.className = "tree-item" + (obj.id === selectedObjectId ? " selected" : "");
+        item.className = "tree-item";
         item.textContent = `${obj.type.toUpperCase()} (${obj.id.slice(-4)})`;
-        item.onclick = () => selectObject(obj.id);
         root.appendChild(item);
       });
     }
 
-    function renderInspector() {
-      const container = document.getElementById("inspector-content");
-      const obj = sceneObjects.find(o => o.id === selectedObjectId);
-      if (!obj) { container.innerHTML = "<i>Select an entity to edit.</i>"; return; }
-
-      const pos = obj.entity.getAttribute("position");
-      const color = obj.entity.getAttribute("material").color;
-
-      container.innerHTML = `
-        <div class="prop-group">
-          <div class="prop-row"><label>Color</label><input type="color" value="${color}" onchange="updateObjColor(this.value)"></div>
-        </div>
-        <div class="panel-title">Position</div>
-        <div class="prop-group">
-          <div class="prop-row"><label>Pos X</label><input type="number" step="0.1" value="${pos.x}" onchange="updateObjPos('x', this.value)"></div>
-          <div class="prop-row"><label>Pos Y</label><input type="number" step="0.1" value="${pos.y}" onchange="updateObjPos('y', this.value)"></div>
-          <div class="prop-row"><label>Pos Z</label><input type="number" step="0.1" value="${pos.z}" onchange="updateObjPos('z', this.value)"></div>
-        </div>
-      `;
-    }
-
-    function updateObjColor(val) {
-      const obj = sceneObjects.find(o => o.id === selectedObjectId);
-      if (obj) obj.entity.setAttribute("material", "color", val);
-    }
-
-    function updateObjPos(axis, val) {
-      const obj = sceneObjects.find(o => o.id === selectedObjectId);
-      if (obj) {
-        const pos = obj.entity.getAttribute("position");
-        pos[axis] = parseFloat(val);
-        obj.entity.setAttribute("position", pos);
-      }
-    }
-
     async function exportAndOpenForm() {
-      const name = document.getElementById("room-name").value || "Untitled Room";
-      const desc = document.getElementById("room-desc").value || "No description.";
-
       const roomData = {
-        metadata: { name, creator: userAccount.username, description: desc },
+        metadata: { name: "Custom VR Quest", timestamp: new Date().toISOString() },
         entities: sceneObjects.map(obj => ({
           id: obj.id,
           type: obj.type,
           position: obj.entity.getAttribute("position"),
-          color: obj.entity.getAttribute("material").color
+          base256Data: obj.base256Data || null
         }))
       };
 
-      const jsonString = JSON.stringify(roomData, null, 2);
-      document.getElementById("code-output").value = jsonString;
-
-      try {
-        await navigator.clipboard.writeText(jsonString);
-        alert("Room payload copied to clipboard!");
-      } catch (err) {
-        console.warn("Clipboard failed", err);
-      }
-
+      const jsonStr = JSON.stringify(roomData);
+      document.getElementById("code-output").value = jsonStr;
+      await navigator.clipboard.writeText(jsonStr);
       document.getElementById("form-modal").style.display = "flex";
     }
-
-    function closeFormModal() {
-      document.getElementById("form-modal").style.display = "none";
-    }
-
-    window.onload = initEditor;
   </script>
 </body>
 </html>
