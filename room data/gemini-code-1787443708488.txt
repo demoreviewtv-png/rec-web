@@ -1,4 +1,0 @@
-NAME: The Golden Trophy
-TYPE: Rec Room Original Quest
-PLAYERS: 1-4
-DESCRIPTION: Venture through the goblin kingdom to retrieve the legendary Golden Trophy! Features swords, bows, and goblin enemy spawns.
