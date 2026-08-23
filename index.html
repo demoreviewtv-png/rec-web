@@ -2,213 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rec Engine - VR Hub & Quests</title>
+  <title>Rec Engine - Dorm Room</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
-
   <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; user-select: none; }
-
-    #game-hud {
-      position: absolute; top: 0; left: 0; right: 0; height: 54px;
-      background: rgba(20, 20, 20, 0.85); border-bottom: 2px solid #ff7700;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px; z-index: 100; backdrop-filter: blur(5px);
-    }
-    .brand { font-weight: 900; font-size: 18px; color: #ff7700; letter-spacing: 1px; }
-    .hud-actions { display: flex; align-items: center; gap: 10px; }
-
-    button {
-      background: #333; color: #fff; border: 1px solid #555;
-      padding: 7px 14px; border-radius: 6px; cursor: pointer;
-      font-size: 12px; font-weight: 700; transition: all 0.2s;
-    }
-    button:hover { background: #ff7700; border-color: #ff7700; color: #000; }
-
-    #profile-chip {
-      display: flex; align-items: center; gap: 8px;
-      background: #222; padding: 4px 12px; border-radius: 20px;
-      border: 1px solid #444; cursor: pointer;
-    }
-    #profile-chip img { width: 26px; height: 26px; border-radius: 50%; background: #ff7700; }
-
-    /* Modals */
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.85); z-index: 999;
-      justify-content: center; align-items: center;
-    }
-    .modal-card {
-      position: relative; width: 90%; max-width: 520px;
-      background: #222; border-radius: 10px; padding: 20px;
-      border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-    }
-    .modal-card h2 { margin-top: 0; color: #ff7700; }
-    .close-btn { position: absolute; top: 12px; right: 15px; background: #d9534f; border: none; padding: 4px 10px; }
-
-    .field-group { margin-bottom: 12px; }
-    .field-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
-    .field-group input, .field-group textarea { width: 100%; background: #111; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; font-family: monospace; }
+    body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    /* 2D Fallback UI */
+    #fallback-ui { position: absolute; top: 10px; right: 10px; z-index: 100; display: flex; gap: 10px; }
+    .rr-btn { background: #ff8800; color: #fff; border: 3px solid #cc6600; padding: 10px 20px; border-radius: 12px; font-weight: 900; font-size: 14px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 0 #cc6600; }
+    .rr-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cc6600; }
   </style>
 </head>
 <body>
 
-  <div id="game-hud">
-    <div class="brand">REC ENGINE VR</div>
-    <div class="hud-actions">
-      <button onclick="openLoadRoomModal()">📂 Load Room JSON</button>
-      <div id="profile-chip" onclick="openProfileModal()">
-        <img id="hud-avatar" src="" alt="Avatar">
-        <span id="hud-username">Player</span>
-      </div>
-      <button onclick="window.location.href='./studio.html'">Studio Editor →</button>
-    </div>
-  </div>
-
-  <!-- Load Room JSON Modal -->
-  <div id="room-modal" class="modal-overlay">
-    <div class="modal-card">
-      <button class="close-btn" onclick="closeLoadRoomModal()">✕</button>
-      <h2>Load Room Data</h2>
-      <div class="field-group">
-        <label>Paste Room .JSON payload (Includes Base256 GLB Models)</label>
-        <textarea id="room-json-input" rows="8" placeholder='{"metadata": {...}, "entities": [...]}'></textarea>
-      </div>
-      <button style="width:100%; background:#ff7700; color:#000;" onclick="loadRoomFromJSON()">Instantiate Room</button>
-    </div>
-  </div>
-
-  <!-- Profile Modal -->
-  <div id="profile-modal" class="modal-overlay">
-    <div class="modal-card">
-      <button class="close-btn" onclick="closeProfileModal()">✕</button>
-      <h2>Watch Profile & Settings</h2>
-      <div class="field-group"><label>Display Name</label><input type="text" id="acc-username"></div>
-      <div class="field-group"><label>Avatar Seed</label><input type="text" id="acc-seed"></div>
-      <button style="width:100%; background:#ff7700; color:#000;" onclick="saveAccount()">Save Settings</button>
-    </div>
+  <div id="fallback-ui">
+    <button class="rr-btn" onclick="window.location.href='./studio.html'">Equip Maker Pen (Edit)</button>
   </div>
 
   <a-scene webxr="optionalFeatures: hit-test, local-floor;" vr-mode-ui="enabled: true">
-    <a-sky color="#1a1a2e"></a-sky>
-    <a-ambient-light color="#888"></a-ambient-light>
-    <a-directional-light position="3 10 5" intensity="0.8"></a-directional-light>
-    <a-plane position="0 0 0" rotation="-90 0 0" width="60" height="60" color="#1a1a24" gridhelper="size: 60; divisions: 60;"></a-plane>
+    <a-sky color="#87CEEB"></a-sky>
+    
+    <!-- Lighting -->
+    <a-ambient-light color="#ffffff" intensity="0.5"></a-ambient-light>
+    <a-point-light position="0 3 0" intensity="0.6"></a-point-light>
 
-    <!-- Player Rig -->
-    <a-entity id="rig" position="0 0 4" movement-controls="fly: false">
-      <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls>
-        <a-cursor color="#ff7700" raycaster="objects: .clickable"></a-cursor>
-      </a-camera>
+    <!-- Dorm Room Environment -->
+    <a-entity id="dorm-room">
+      <!-- Floor & Walls -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="8" height="8" color="#a38c73"></a-plane>
+      <a-box position="0 2 -4" width="8" height="4" depth="0.2" color="#e6dac3"></a-box>
+      <a-box position="-4 2 0" width="0.2" height="4" depth="8" color="#e6dac3"></a-box>
+      <a-box position="4 2 0" width="0.2" height="4" depth="8" color="#e6dac3"></a-box>
 
-      <!-- Left Hand with Rec Room-Style Smart Watch -->
-      <a-entity id="leftHand" hand-controls="hand: left" laser-controls="hand: left" raycaster="objects: .clickable; far: 4">
-        <!-- Wrist Watch 3D Mesh & Interactive Screen -->
-        <a-group position="0 0.02 0.15" rotation="-90 0 0">
-          <!-- Strap & Bezel -->
-          <a-cylinder radius="0.045" height="0.03" color="#222"></a-cylinder>
-          <a-ring radius-inner="0.04" radius-outer="0.048" color="#ff7700" position="0 0.016 0" rotation="-90 0 0"></a-ring>
-          <!-- Screen Interface -->
-          <a-plane position="0 0.017 0" rotation="-90 0 0" width="0.08" height="0.08" color="#111">
-            <a-text value="REC WATCH" align="center" position="0 0.025 0.001" scale="0.08 0.08 0.08" color="#ff7700"></a-text>
-            <!-- UI Buttons on Watch -->
-            <a-plane class="clickable" position="0 0.005 0.001" width="0.07" height="0.02" color="#007acc" onclick="openProfileModal()">
-              <a-text value="PROFILE" align="center" position="0 0 0.001" scale="0.06 0.06 0.06" color="#fff"></a-text>
-            </a-plane>
-            <a-plane class="clickable" position="0 -0.02 0.001" width="0.07" height="0.02" color="#28a745" onclick="openLoadRoomModal()">
-              <a-text value="ROOMS" align="center" position="0 0 0.001" scale="0.06 0.06 0.06" color="#fff"></a-text>
-            </a-plane>
-          </a-plane>
-        </a-group>
-      </a-entity>
+      <!-- Bed -->
+      <a-box position="2.5 0.3 -2.5" width="2" height="0.6" depth="3" color="#444"></a-box>
+      <a-box position="2.5 0.7 -2.5" width="1.9" height="0.2" depth="2.9" color="#ff8800"></a-box>
+      <a-box position="2.5 0.8 -3.5" width="1.5" height="0.3" depth="0.8" color="#fff" radius="0.1"></a-box>
 
-      <!-- Right Hand -->
-      <a-entity id="rightHand" hand-controls="hand: right" laser-controls="hand: right" raycaster="objects: .clickable; far: 4"></a-entity>
+      <!-- Dorm Mirror Frame -->
+      <a-box position="-3.9 1.5 -1.5" width="0.1" height="2" depth="1.5" color="#555"></a-box>
+      <a-plane position="-3.8 1.5 -1.5" rotation="0 90 0" width="1.3" height="1.8" color="#88ccff" opacity="0.8"></a-plane>
+
+      <!-- Whiteboard -->
+      <a-box position="-1.5 1.5 -3.9" width="3" height="2" depth="0.1" color="#fff"></a-box>
+      <a-text value="Welcome to your Dorm!\n- Grab the Maker Pen to create.\n- Open Watch to Play." position="-2.8 2 -3.8" color="#000" scale="0.5 0.5 0.5"></a-text>
     </a-entity>
 
-    <!-- Room Objects Container -->
-    <a-entity id="dynamic-room-container"></a-entity>
+    <!-- Rec Room Style "Bean" Player Rig -->
+    <a-entity id="rig" position="0 0 1.5" movement-controls="fly: false">
+      <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls>
+        <a-cursor color="#ff8800" raycaster="objects: .clickable"></a-cursor>
+      </a-camera>
+
+      <!-- Left Hand (Watch) -->
+      <a-entity id="leftHand" hand-controls="hand: left" laser-controls="hand: left" raycaster="objects: .clickable; far: 4">
+        <!-- Floating Hand Mesh -->
+        <a-sphere radius="0.06" color="#f1c27d" position="0 0 0"></a-sphere>
+        
+        <!-- Rec Room Watch -->
+        <a-entity position="0 0.05 0.1" rotation="-45 90 0">
+          <a-cylinder radius="0.05" height="0.02" color="#111"></a-cylinder>
+          <a-ring radius-inner="0.04" radius-outer="0.05" position="0 0.011 0" rotation="-90 0 0" color="#ff8800"></a-ring>
+          <a-circle class="clickable" radius="0.04" position="0 0.01 0" rotation="-90 0 0" color="#333" onclick="toggleWatchMenu()">
+            <a-text value="MENU" align="center" scale="0.15 0.15 0.15" color="#ff8800"></a-text>
+          </a-circle>
+        </a-entity>
+
+        <!-- Pop-up Watch Hologram UI (Hidden by default) -->
+        <a-entity id="watch-hologram" position="0.2 0.2 -0.1" rotation="0 45 0" visible="false">
+          <a-plane width="0.6" height="0.4" color="#222" opacity="0.9" border-radius="0.05">
+            <a-text value="WATCH MENU" position="-0.25 0.15 0.01" scale="0.3 0.3 0.3" color="#ff8800"></a-text>
+            
+            <!-- Play Button -->
+            <a-box class="clickable" position="-0.15 0 0.01" width="0.25" height="0.1" depth="0.02" color="#007acc" onclick="alert('Rooms menu opening...')">
+              <a-text value="PLAY" align="center" position="0 0 0.02" scale="0.25 0.25 0.25"></a-text>
+            </a-box>
+            
+            <!-- Backpack/Maker Pen Button -->
+            <a-box class="clickable" position="0.15 0 0.01" width="0.25" height="0.1" depth="0.02" color="#ff8800" onclick="window.location.href='./studio.html'">
+              <a-text value="BACKPACK" align="center" position="0 0 0.02" scale="0.25 0.25 0.25"></a-text>
+            </a-box>
+          </a-plane>
+        </a-entity>
+      </a-entity>
+
+      <!-- Right Hand (Maker Pen) -->
+      <a-entity id="rightHand" hand-controls="hand: right" laser-controls="hand: right" raycaster="objects: .clickable; far: 4">
+        <!-- Floating Hand Mesh -->
+        <a-sphere radius="0.06" color="#f1c27d" position="0 0 0"></a-sphere>
+        
+        <!-- Maker Pen Model -->
+        <a-entity position="0 0.02 -0.1" rotation="45 0 0">
+          <a-cylinder radius="0.02" height="0.15" color="#444"></a-cylinder>
+          <a-cone radius-bottom="0.02" radius-top="0.005" height="0.05" position="0 0.1 0" color="#ff8800"></a-cone>
+          <a-sphere radius="0.006" position="0 0.125 0" color="#00ff00"></a-sphere>
+        </a-entity>
+      </a-entity>
+    </a-entity>
   </a-scene>
 
   <script>
-    // Base256 Decoder for GLB raw binary recovery
-    function base256ToBytes(str) {
-      const bytes = new Uint8Array(str.length);
-      for (let i = 0; i < str.length; i++) {
-        bytes[i] = str.charCodeAt(i) & 0xFF;
-      }
-      return bytes.buffer;
+    function toggleWatchMenu() {
+      const holo = document.getElementById("watch-hologram");
+      const isVisible = holo.getAttribute("visible");
+      holo.setAttribute("visible", !isVisible);
     }
-
-    const DEFAULT_ACC = { username: "RecPlayer", seed: "RecPlayer" };
-    let userAccount = JSON.parse(localStorage.getItem("rec_game_account")) || DEFAULT_ACC;
-
-    function getAvatarUrl(seed) { return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed)}`; }
-
-    function initAccount() {
-      document.getElementById("hud-username").textContent = userAccount.username;
-      document.getElementById("hud-avatar").src = getAvatarUrl(userAccount.seed);
-    }
-
-    function openProfileModal() {
-      document.getElementById("acc-username").value = userAccount.username;
-      document.getElementById("acc-seed").value = userAccount.seed;
-      document.getElementById("profile-modal").style.display = "flex";
-    }
-
-    function closeProfileModal() { document.getElementById("profile-modal").style.display = "none"; }
-    function openLoadRoomModal() { document.getElementById("room-modal").style.display = "flex"; }
-    function closeLoadRoomModal() { document.getElementById("room-modal").style.display = "none"; }
-
-    function saveAccount() {
-      userAccount.username = document.getElementById("acc-username").value || "RecPlayer";
-      userAccount.seed = document.getElementById("acc-seed").value || "RecPlayer";
-      localStorage.setItem("rec_game_account", JSON.stringify(userAccount));
-      initAccount();
-      closeProfileModal();
-    }
-
-    // Dynamic Room & Base256 Model Loader
-    function loadRoomFromJSON() {
-      const rawInput = document.getElementById("room-json-input").value;
-      if (!rawInput) return;
-
-      try {
-        const roomData = JSON.parse(rawInput);
-        const container = document.getElementById("dynamic-room-container");
-        container.innerHTML = ""; // Clear current room
-
-        roomData.entities.forEach(ent => {
-          const elem = document.createElement("a-entity");
-          elem.setAttribute("position", ent.position || "0 0 0");
-          elem.setAttribute("rotation", ent.rotation || "0 0 0");
-          elem.setAttribute("scale", ent.scale || "1 1 1");
-
-          if (ent.type === "glb_base256" && ent.base256Data) {
-            // Reconstruct GLB Blob from Base256 string representation
-            const arrayBuffer = base256ToBytes(ent.base256Data);
-            const blob = new Blob([arrayBuffer], { type: "model/gltf-binary" });
-            const blobUrl = URL.createObjectURL(blob);
-            elem.setAttribute("gltf-model", blobUrl);
-          } else {
-            elem.setAttribute("geometry", { primitive: ent.type || "box" });
-            elem.setAttribute("material", { color: ent.color || "#ff7700" });
-          }
-
-          elem.classList.add("clickable");
-          container.appendChild(elem);
-        });
-
-        closeLoadRoomModal();
-        alert(`Successfully loaded room: ${roomData.metadata?.name || "Custom Room"}`);
-      } catch (err) {
-        alert("Invalid Room JSON payload! Please check format.");
-      }
-    }
-
-    window.onload = initAccount;
   </script>
 </body>
 </html>
