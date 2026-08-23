@@ -2,147 +2,260 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rec Engine - Studio Editor</title>
+  <title>Rec Engine - Maker Pen Studio</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #181818; color: #eee; }
-    #editor-layout { display: grid; grid-template-columns: 240px 1fr 300px; grid-template-rows: 48px 1fr 160px; height: 100vh; }
-    #toolbar { grid-column: 1 / -1; background: #252526; border-bottom: 1px solid #3c3c3c; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
-    button { background: #333; color: #fff; border: 1px solid #454545; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    button:hover { background: #007acc; }
-    #hierarchy { background: #1e1e1e; border-right: 1px solid #3c3c3c; padding: 10px; overflow-y: auto; }
-    #viewport-container { grid-column: 2; grid-row: 2; position: relative; }
-    #inspector { background: #1e1e1e; border-left: 1px solid #3c3c3c; padding: 10px; grid-column: 3; grid-row: 2 / -1; }
-    #bottom-panel { grid-column: 1 / 3; grid-row: 3; background: #181818; border-top: 1px solid #3c3c3c; padding: 10px; }
-    textarea { width: 100%; height: 95px; background: #111; color: #00ff66; font-family: monospace; border: 1px solid #333; padding: 8px; resize: none; font-size: 11px; }
-    .tree-item { padding: 5px; cursor: pointer; border-radius: 3px; font-size: 12px; margin-bottom: 2px; background: #252526; }
-    .tree-item.selected { background: #094771; font-weight: bold; }
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center; }
-    .modal-card { width: 90%; max-width: 750px; height: 85vh; background: #252526; border-radius: 8px; padding: 20px; position: relative; }
+    * { box-sizing: border-box; user-select: none; }
+    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; }
+    
+    /* Maker Pen Palette Floating UI */
+    #maker-palette {
+      position: absolute; top: 20px; left: 20px; width: 340px; height: calc(100vh - 40px);
+      background: rgba(30, 30, 30, 0.95); border: 4px solid #444; border-radius: 20px;
+      display: flex; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Palette Header */
+    .palette-header { background: #ff8800; color: #fff; padding: 15px; border-radius: 15px 15px 0 0; text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 2px solid #444; background: #222; }
+    .tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 700; cursor: pointer; color: #aaa; }
+    .tab.active { color: #ff8800; border-bottom: 3px solid #ff8800; background: #333; }
+
+    /* Content Area */
+    .palette-content { padding: 15px; flex: 1; overflow-y: auto; }
+    .section-title { font-size: 12px; color: #ff8800; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; }
+
+    /* Tool Grid */
+    .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+    .tool-btn { background: #444; border: 2px solid #555; padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.1s; }
+    .tool-btn:hover { background: #555; border-color: #ff8800; }
+    .tool-btn:active { transform: scale(0.95); }
+
+    /* Props & Settings */
+    .prop-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #222; padding: 8px; border-radius: 8px; }
+    .prop-row label { font-size: 12px; font-weight: bold; color: #ccc; }
+    .prop-row input { width: 50%; background: #111; border: 1px solid #444; color: #fff; padding: 6px; border-radius: 6px; font-weight: bold; }
+
+    /* Save/Publish Button */
+    .publish-btn { background: #28a745; border: 3px solid #1e7e34; color: white; padding: 15px; text-align: center; font-weight: 900; font-size: 16px; border-radius: 0 0 15px 15px; cursor: pointer; text-transform: uppercase; }
+    .publish-btn:hover { background: #218838; }
+
+    /* Top Right Navigation */
+    #nav-buttons { position: absolute; top: 20px; right: 20px; z-index: 100; display: flex; gap: 10px; }
+    .nav-btn { background: #444; border: 3px solid #555; color: white; padding: 10px 20px; border-radius: 12px; font-weight: 900; cursor: pointer; }
+    .nav-btn:hover { background: #ff8800; border-color: #cc6600; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 999; justify-content: center; align-items: center; }
+    .modal-card { width: 90%; max-width: 600px; background: #222; border-radius: 15px; padding: 20px; border: 4px solid #ff8800; position: relative; }
+    #form-iframe { width: 100%; height: 60vh; border: none; border-radius: 10px; margin-top: 15px; background: #fff; }
+    .close-btn { position: absolute; top: -15px; right: -15px; background: #d9534f; color: white; border: 3px solid #c9302c; padding: 10px 15px; border-radius: 50%; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <div id="editor-layout">
-    <div id="toolbar">
-      <b style="color:#ff7700;">STUDIO</b>
-      <button onclick="createPrimitive('box')">+ Cube</button>
-      <button onclick="createPrimitive('sphere')">+ Sphere</button>
-      <button onclick="triggerGlbUpload()">+ Import GLB Model</button>
-      <input type="file" id="glb-file-input" accept=".glb" style="display:none" onchange="handleGlbFileSelect(event)">
-      
-      <button style="margin-left:auto; background:#28a745;" onclick="exportAndOpenForm()">Submit to Google Form</button>
-      <button onclick="window.location.href='./index.html'">Back to Game</button>
-    </div>
-
-    <div id="hierarchy"><div id="tree-root"></div></div>
-
-    <div id="viewport-container">
-      <a-scene embedded>
-        <a-sky color="#1a1a2e"></a-sky>
-        <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#222" gridhelper="size: 30; divisions: 30;"></a-plane>
-        <a-camera position="0 2 5" look-controls wasd-controls></a-camera>
-        <a-entity id="user-scene"></a-entity>
-      </a-scene>
-    </div>
-
-    <div id="inspector"><div id="inspector-content"><i>Select an item to edit.</i></div></div>
-
-    <div id="bottom-panel">
-      <textarea id="code-output" readonly placeholder="Room payload will appear here..."></textarea>
-    </div>
+  <!-- Top Navigation -->
+  <div id="nav-buttons">
+    <button class="nav-btn" onclick="window.location.href='./index.html'">Go to Dorm Room</button>
   </div>
 
-  <div id="form-modal" class="modal-overlay">
+  <!-- Maker Pen UI Panel -->
+  <div id="maker-palette">
+    <div class="palette-header">Maker Pen</div>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('palette')">Palette</div>
+      <div class="tab" onclick="switchTab('tools')">Tools</div>
+      <div class="tab" onclick="switchTab('config')">Config</div>
+    </div>
+
+    <div class="palette-content" id="tab-palette">
+      <div class="section-title">Shapes</div>
+      <div class="tool-grid">
+        <div class="tool-btn" onclick="createShape('box')">Cube</div>
+        <div class="tool-btn" onclick="createShape('sphere')">Sphere</div>
+        <div class="tool-btn" onclick="createShape('cylinder')">Cylinder</div>
+        <div class="tool-btn" onclick="createShape('cone')">Cone</div>
+      </div>
+      <div class="section-title">Swatches (Color)</div>
+      <input type="color" id="maker-color" value="#007acc" style="width: 100%; height: 50px; border: none; border-radius: 8px; cursor: pointer;">
+    </div>
+
+    <div class="palette-content" id="tab-tools" style="display: none;">
+      <div class="section-title">Hierarchy (Ink in Room)</div>
+      <div id="hierarchy-list" style="background: #222; border-radius: 8px; padding: 10px; min-height: 150px; overflow-y: auto;">
+        <i style="color: #666; font-size: 12px;">No shapes drawn yet.</i>
+      </div>
+    </div>
+
+    <div class="palette-content" id="tab-config" style="display: none;">
+      <div class="section-title">Room Settings</div>
+      <div class="prop-row"><label>Room Name</label><input type="text" id="room-name" value="^MyNewRoom"></div>
+      
+      <div class="section-title" style="margin-top: 20px;">Selected Shape</div>
+      <div id="inspector-content">
+        <i style="color: #666; font-size: 12px;">Use the Select tool on a shape.</i>
+      </div>
+    </div>
+
+    <!-- Hidden Output for the Form -->
+    <textarea id="json-payload" style="display:none;"></textarea>
+    
+    <div class="publish-btn" onclick="saveAndPublish()">Save & Publish Room</div>
+  </div>
+
+  <!-- 3D Environment -->
+  <a-scene embedded>
+    <a-sky color="#252525"></a-sky>
+    <!-- Rec Room style grid floor -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="40" height="40" color="#333" gridhelper="size: 40; divisions: 40;"></a-plane>
+    <a-ambient-light intensity="0.7"></a-ambient-light>
+    <a-directional-light position="2 5 3" intensity="0.6"></a-directional-light>
+    
+    <a-camera position="0 1.6 3" look-controls wasd-controls></a-camera>
+    <a-entity id="ink-space"></a-entity>
+  </a-scene>
+
+  <!-- Publish Google Form Modal -->
+  <div id="publish-modal" class="modal-overlay">
     <div class="modal-card">
-      <button style="position:absolute; top:10px; right:10px; background:#d9534f;" onclick="document.getElementById('form-modal').style.display='none'">✕ Close</button>
-      <iframe src="https://forms.gle/NdcGi2QNuVUTTE2Z6" style="width:100%; height:100%; border:none; margin-top:20px;"></iframe>
+      <button class="close-btn" onclick="document.getElementById('publish-modal').style.display='none'">X</button>
+      <h2 style="margin: 0; color: #ff8800; text-transform: uppercase;">Room Published to Clipboard!</h2>
+      <p style="font-size: 14px; color: #ccc;">Paste your room payload into the form below to save it permanently.</p>
+      <iframe id="form-iframe" src="https://forms.gle/NdcGi2QNuVUTTE2Z6"></iframe>
     </div>
   </div>
 
   <script>
-    let sceneObjects = [];
-    let selectedObjectId = null;
+    let sceneShapes = [];
+    let selectedShapeId = null;
 
-    // Convert Binary ArrayBuffer to Base256 String for JSON inclusion
-    function bytesToBase256(arrayBuffer) {
-      const bytes = new Uint8Array(arrayBuffer);
-      let binaryStr = '';
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binaryStr += String.fromCharCode(bytes[i]);
-      }
-      return binaryStr;
+    function switchTab(tabId) {
+      document.getElementById('tab-palette').style.display = 'none';
+      document.getElementById('tab-tools').style.display = 'none';
+      document.getElementById('tab-config').style.display = 'none';
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      
+      document.getElementById('tab-' + tabId).style.display = 'block';
+      event.target.classList.add('active');
     }
 
-    function createPrimitive(type) {
-      const id = "obj_" + Date.now();
+    function createShape(type) {
+      const id = "shape_" + Date.now();
+      const color = document.getElementById("maker-color").value;
       const entity = document.createElement("a-entity");
+      
       entity.setAttribute("id", id);
       entity.setAttribute("geometry", { primitive: type });
-      entity.setAttribute("material", { color: "#ff7700" });
-      entity.setAttribute("position", `0 ${1 + sceneObjects.length * 0.2} -2`);
-
-      document.getElementById("user-scene").appendChild(entity);
-      sceneObjects.push({ id, type, entity });
+      entity.setAttribute("material", { color: color });
+      entity.setAttribute("position", `0 ${1 + sceneShapes.length * 0.5} -2`);
+      entity.classList.add("clickable");
+      
+      entity.addEventListener("click", () => selectShape(id));
+      document.getElementById("ink-space").appendChild(entity);
+      
+      sceneShapes.push({ id, type, entity, color });
       updateHierarchy();
+      selectShape(id);
     }
 
-    function triggerGlbUpload() { document.getElementById("glb-file-input").click(); }
+    function selectShape(id) {
+      selectedShapeId = id;
+      updateHierarchy();
+      
+      const obj = sceneShapes.find(s => s.id === id);
+      if (!obj) return;
+      
+      const pos = obj.entity.getAttribute("position");
+      const scale = obj.entity.getAttribute("scale") || {x:1, y:1, z:1};
 
-    function handleGlbFileSelect(evt) {
-      const file = evt.target.files[0];
-      if (!file) return;
+      document.getElementById("inspector-content").innerHTML = `
+        <div class="prop-row"><label>Color</label><input type="color" value="${obj.color}" onchange="updateShape('${id}', 'color', this.value)"></div>
+        <div class="prop-row"><label>Pos X</label><input type="number" step="0.1" value="${pos.x}" onchange="updateShape('${id}', 'px', this.value)"></div>
+        <div class="prop-row"><label>Pos Y</label><input type="number" step="0.1" value="${pos.y}" onchange="updateShape('${id}', 'py', this.value)"></div>
+        <div class="prop-row"><label>Pos Z</label><input type="number" step="0.1" value="${pos.z}" onchange="updateShape('${id}', 'pz', this.value)"></div>
+        <button style="width:100%; margin-top:10px; background:#d9534f; border:none; padding:10px; color:white; font-weight:bold; border-radius:8px; cursor:pointer;" onclick="deleteShape('${id}')">Delete Shape</button>
+      `;
+      switchTab('config');
+    }
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const arrayBuffer = e.target.result;
-        const base256Str = bytesToBase256(arrayBuffer);
+    function updateShape(id, prop, val) {
+      const obj = sceneShapes.find(s => s.id === id);
+      if (!obj) return;
 
-        const id = "glb_" + Date.now();
-        const blob = new Blob([arrayBuffer], { type: "model/gltf-binary" });
-        const blobUrl = URL.createObjectURL(blob);
+      if (prop === 'color') {
+        obj.color = val;
+        obj.entity.setAttribute("material", "color", val);
+      } else {
+        const pos = obj.entity.getAttribute("position");
+        if (prop === 'px') pos.x = val;
+        if (prop === 'py') pos.y = val;
+        if (prop === 'pz') pos.z = val;
+        obj.entity.setAttribute("position", pos);
+      }
+    }
 
-        const entity = document.createElement("a-entity");
-        entity.setAttribute("id", id);
-        entity.setAttribute("gltf-model", blobUrl);
-        entity.setAttribute("position", "0 1 -2");
-
-        document.getElementById("user-scene").appendChild(entity);
-        sceneObjects.push({ id, type: "glb_base256", entity, base256Data: base256Str });
+    function deleteShape(id) {
+      const index = sceneShapes.findIndex(s => s.id === id);
+      if (index > -1) {
+        const entity = sceneShapes[index].entity;
+        entity.parentNode.removeChild(entity);
+        sceneShapes.splice(index, 1);
+        document.getElementById("inspector-content").innerHTML = `<i style="color: #666; font-size: 12px;">Use the Select tool on a shape.</i>`;
         updateHierarchy();
-      };
-      reader.readAsArrayBuffer(file);
+      }
     }
 
     function updateHierarchy() {
-      const root = document.getElementById("tree-root");
-      root.innerHTML = "";
-      sceneObjects.forEach(obj => {
-        const item = document.createElement("div");
-        item.className = "tree-item";
-        item.textContent = `${obj.type.toUpperCase()} (${obj.id.slice(-4)})`;
-        root.appendChild(item);
+      const list = document.getElementById("hierarchy-list");
+      list.innerHTML = "";
+      if (sceneShapes.length === 0) {
+        list.innerHTML = `<i style="color: #666; font-size: 12px;">No shapes drawn yet.</i>`;
+        return;
+      }
+      
+      sceneShapes.forEach(shape => {
+        const div = document.createElement("div");
+        div.style.padding = "8px";
+        div.style.marginBottom = "4px";
+        div.style.background = shape.id === selectedShapeId ? "#007acc" : "#333";
+        div.style.borderRadius = "6px";
+        div.style.cursor = "pointer";
+        div.style.fontSize = "12px";
+        div.style.fontWeight = "bold";
+        div.textContent = `[${shape.type.toUpperCase()}] Ink Shape`;
+        div.onclick = () => selectShape(shape.id);
+        list.appendChild(div);
       });
     }
 
-    async function exportAndOpenForm() {
+    async function saveAndPublish() {
       const roomData = {
-        metadata: { name: "Custom VR Quest", timestamp: new Date().toISOString() },
-        entities: sceneObjects.map(obj => ({
-          id: obj.id,
-          type: obj.type,
-          position: obj.entity.getAttribute("position"),
-          base256Data: obj.base256Data || null
+        metadata: {
+          name: document.getElementById("room-name").value,
+          inkCost: sceneShapes.length * 0.5 + "%"
+        },
+        entities: sceneShapes.map(s => ({
+          type: s.type,
+          color: s.color,
+          position: s.entity.getAttribute("position")
         }))
       };
 
-      const jsonStr = JSON.stringify(roomData);
-      document.getElementById("code-output").value = jsonStr;
-      await navigator.clipboard.writeText(jsonStr);
-      document.getElementById("form-modal").style.display = "flex";
+      const payload = JSON.stringify(roomData);
+      document.getElementById("json-payload").value = payload;
+      
+      try {
+        await navigator.clipboard.writeText(payload);
+      } catch (e) {
+        console.warn("Clipboard auto-copy blocked.");
+      }
+
+      document.getElementById("publish-modal").style.display = "flex";
     }
   </script>
 </body>
