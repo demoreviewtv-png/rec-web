@@ -3,79 +3,174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Golden Trophy - Quest Game</title>
+  <title>Rec Engine - Main Game</title>
+
+  <!-- A-Frame and Extras -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+
   <style>
-    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; }
-    #hud {
-      position: absolute; top: 15px; left: 15px; z-index: 999;
-      background: rgba(20, 20, 20, 0.85); color: #fff; padding: 15px;
-      border-radius: 10px; border: 2px solid #ffd700; width: 260px;
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; user-select: none; }
+
+    /* HUD Bar Overlay */
+    #game-hud {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 54px; background: rgba(20, 20, 20, 0.85);
+      border-bottom: 2px solid #ff7700;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; z-index: 100; backdrop-filter: blur(5px);
     }
-    .btn {
-      background: #ffd700; color: #111; border: none; padding: 8px 12px;
-      font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 8px;
+
+    .brand { font-weight: 900; font-size: 18px; color: #ff7700; letter-spacing: 1px; }
+
+    .hud-actions { display: flex; align-items: center; gap: 12px; }
+
+    button {
+      background: #333; color: #fff; border: 1px solid #555;
+      padding: 7px 14px; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: all 0.2s;
     }
-    .btn:hover { background: #e6c200; }
-    .btn-studio { background: #007acc; color: white; }
-    .btn-studio:hover { background: #005999; }
-    #stats { font-size: 14px; margin-top: 8px; }
+    button:hover { background: #ff7700; border-color: #ff7700; color: #000; }
+
+    #profile-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: #222; padding: 4px 12px; border-radius: 20px;
+      border: 1px solid #444; cursor: pointer;
+    }
+    #profile-chip img { width: 28px; height: 28px; border-radius: 50%; background: #ff7700; }
+    #profile-chip span { font-size: 13px; font-weight: bold; }
+
+    /* Modals */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85); z-index: 999;
+      justify-content: center; align-items: center;
+    }
+    .modal-card {
+      position: relative; width: 90%; max-width: 480px;
+      background: #222; border-radius: 10px; padding: 24px;
+      border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    }
+    .modal-card h2 { margin-top: 0; color: #ff7700; }
+    .close-btn { position: absolute; top: 12px; right: 15px; background: #d9534f; border: none; padding: 4px 10px; }
+
+    .field-group { margin-bottom: 14px; }
+    .field-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+    .field-group input { width: 100%; background: #111; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; }
+    .avatar-preview { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ff7700; display: block; margin: 10px auto; }
   </style>
 </head>
 <body>
 
-  <!-- Game HUD -->
-  <div id="hud">
-    <h2 style="margin:0; color:#ffd700;">Golden Trophy</h2>
-    <div id="status">Connecting to network...</div>
-    <div id="stats">
-      <div>Enemies Remaining: <span id="enemy-count">0</span></div>
-      <div>Gold Earned: <span id="gold-count">0</span></div>
+  <!-- Game HUD Header -->
+  <div id="game-hud">
+    <div class="brand">REC ENGINE</div>
+    <div class="hud-actions">
+      <div id="profile-chip" onclick="openProfileModal()">
+        <img id="hud-avatar" src="" alt="Avatar">
+        <span id="hud-username">Player</span>
+      </div>
+      <button onclick="window.location.href='./studio.html'">Studio Editor →</button>
     </div>
-    <button class="btn" onclick="startQuestStage()">Spawn Goblin Wave</button>
-    
-    <!-- Button to Open Editor -->
-    <a href="./studio.html" style="text-decoration:none;">
-      <button class="btn btn-studio">🛠️ Open Room Editor</button>
-    </a>
   </div>
 
-  <a-scene embedded vr-mode-ui="enabled: true">
-    <a-sky color="#1a0f2e"></a-sky>
-    <a-ambient-light color="#444"></a-ambient-light>
-    <a-point-light position="0 5 0" intensity="0.8" color="#fff8d6"></a-point-light>
+  <!-- Profile / Avatar Customization Modal -->
+  <div id="profile-modal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="close-btn" onclick="closeProfileModal()">✕</button>
+      <h2>Player Profile & Avatar</h2>
+      <img id="avatar-preview" class="avatar-preview" src="" alt="Avatar Preview">
+      
+      <div class="field-group">
+        <label>Display Name</label>
+        <input type="text" id="acc-username">
+      </div>
+      <div class="field-group">
+        <label>Avatar Seed / Style</label>
+        <input type="text" id="acc-seed" oninput="updateAvatarPreview()">
+      </div>
+      <div class="field-group">
+        <label>Bio</label>
+        <input type="text" id="acc-bio">
+      </div>
+      <button style="width: 100%; background: #ff7700; color: #000; margin-top: 10px;" onclick="saveAccount()">Save Profile</button>
+    </div>
+  </div>
 
-    <!-- Dungeon Floor & Walls -->
-    <a-plane position="0 0 -10" rotation="-90 0 0" width="30" height="40" color="#2b2b2b"></a-plane>
-    <a-box position="-15 2.5 -10" width="1" height="5" depth="40" color="#1c1c1c"></a-box>
-    <a-box position="15 2.5 -10" width="1" height="5" depth="40" color="#1c1c1c"></a-box>
-    <a-box id="zone-gate" position="0 2.5 -29" width="8" height="5" depth="0.5" color="#8b0000"></a-box>
+  <!-- WebXR 3D Scene -->
+  <a-scene webxr="optionalFeatures: hit-test, local-floor;" vr-mode-ui="enabled: true">
+    <a-sky color="#1a1a2e"></a-sky>
+    <a-ambient-light color="#777"></a-ambient-light>
+    <a-directional-light position="3 10 5" intensity="1.0" cast-shadow="true"></a-directional-light>
 
-    <!-- Weapon Rack -->
-    <a-entity id="weapon-rack" position="0 0 -2">
-      <a-box id="sword" position="-1 1 0" width="0.1" height="0.8" depth="0.1" color="#c0c0c0" class="clickable" onclick="equipWeapon('sword')">
-        <a-box position="0 -0.3 0" width="0.3" height="0.05" depth="0.1" color="#8b4513"></a-box>
-      </a-box>
-      <a-torus id="bow" position="1 1 0" radius="0.3" radius-tubular="0.02" arc="180" rotation="0 0 -90" color="#8b4513" class="clickable" onclick="equipWeapon('bow')"></a-torus>
-    </a-entity>
+    <!-- Ground Floor Grid -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="50" height="50" color="#1e1e2f" gridhelper="size: 50; divisions: 50;"></a-plane>
 
-    <!-- Player Rig -->
-    <a-entity id="rig" position="0 0 0">
-      <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls>
-        <a-cursor raycaster="objects: .clickable" color="#ffd700"></a-cursor>
-        <a-entity id="held-weapon" position="0.3 -0.2 -0.5" class="clickable" onclick="shootWeapon()"></a-entity>
+    <!-- Player Rig for Desktop & WebXR VR -->
+    <a-entity id="rig" position="0 0 4" movement-controls="fly: false">
+      <a-camera id="camera" position="0 1.6 0" look-controls="pointerLockEnabled: false" wasd-controls>
+        <a-cursor color="#ff7700" raycaster="objects: .clickable"></a-cursor>
       </a-camera>
-      <a-entity laser-controls="hand: left"></a-entity>
-      <a-entity laser-controls="hand: right"></a-entity>
+
+      <!-- WebXR Motion Controllers -->
+      <a-entity id="leftHand" laser-controls="hand: left" raycaster="objects: .clickable; far: 5"></a-entity>
+      <a-entity id="rightHand" laser-controls="hand: right" raycaster="objects: .clickable; far: 5"></a-entity>
     </a-entity>
 
-    <a-entity id="projectiles-container"></a-entity>
-    <a-entity id="players-container"></a-entity>
-    <a-entity id="enemies-container"></a-entity>
+    <!-- Rec Room Hub Plaza Objects -->
+    <a-box position="-2 0.75 -3" rotation="0 15 0" color="#ff7700" class="clickable"></a-box>
+    <a-sphere position="0 1.2 -4" radius="0.8" color="#007acc" class="clickable"></a-sphere>
+    <a-cylinder position="2 0.75 -3" radius="0.5" height="1.5" color="#28a745" class="clickable"></a-cylinder>
   </a-scene>
 
-  <script type="module" src="./js/firebase.js"></script>
-  <script src="./js/game.js"></script>
+  <script>
+    // Local Account Management
+    const DEFAULT_ACC = {
+      username: "RecPlayer",
+      seed: "RecPlayer",
+      bio: "Exploring rooms in Rec Engine VR!"
+    };
+
+    let userAccount = JSON.parse(localStorage.getItem("rec_game_account")) || DEFAULT_ACC;
+
+    function getAvatarUrl(seed) {
+      return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed)}`;
+    }
+
+    function initAccount() {
+      document.getElementById("hud-username").textContent = userAccount.username;
+      document.getElementById("hud-avatar").src = getAvatarUrl(userAccount.seed);
+    }
+
+    function openProfileModal() {
+      document.getElementById("acc-username").value = userAccount.username;
+      document.getElementById("acc-seed").value = userAccount.seed;
+      document.getElementById("acc-bio").value = userAccount.bio;
+      updateAvatarPreview();
+      document.getElementById("profile-modal").style.display = "flex";
+    }
+
+    function updateAvatarPreview() {
+      const seed = document.getElementById("acc-seed").value || "RecPlayer";
+      document.getElementById("avatar-preview").src = getAvatarUrl(seed);
+    }
+
+    function saveAccount() {
+      userAccount.username = document.getElementById("acc-username").value || "RecPlayer";
+      userAccount.seed = document.getElementById("acc-seed").value || "RecPlayer";
+      userAccount.bio = document.getElementById("acc-bio").value || "";
+
+      localStorage.setItem("rec_game_account", JSON.stringify(userAccount));
+      initAccount();
+      closeProfileModal();
+    }
+
+    function closeProfileModal() {
+      document.getElementById("profile-modal").style.display = "none";
+    }
+
+    window.onload = initAccount;
+  </script>
 </body>
 </html>
