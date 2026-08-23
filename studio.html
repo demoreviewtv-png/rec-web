@@ -4,259 +4,195 @@
   <meta charset="UTF-8">
   <title>Rec Engine - Maker Pen Studio</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-
   <style>
     * { box-sizing: border-box; user-select: none; }
-    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; }
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #111; color: #fff; }
     
-    /* Maker Pen Palette Floating UI */
     #maker-palette {
-      position: absolute; top: 20px; left: 20px; width: 340px; height: calc(100vh - 40px);
-      background: rgba(30, 30, 30, 0.95); border: 4px solid #444; border-radius: 20px;
-      display: flex; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      backdrop-filter: blur(10px);
+      position: absolute; top: 20px; left: 20px; width: 320px; height: calc(100vh - 40px);
+      background: rgba(30, 30, 30, 0.95); border: 3px solid #444; border-radius: 16px;
+      display: flex; flex-direction: column; z-index: 100; backdrop-filter: blur(8px);
     }
+    .palette-header { background: #ff8800; padding: 12px; border-radius: 12px 12px 0 0; text-align: center; font-weight: 900; font-size: 16px; }
+    .tabs { display: flex; background: #222; border-bottom: 2px solid #444; }
+    .tab { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; color: #aaa; }
+    .tab.active { color: #ff8800; background: #333; border-bottom: 2px solid #ff8800; }
     
-    /* Palette Header */
-    .palette-header { background: #ff8800; color: #fff; padding: 15px; border-radius: 15px 15px 0 0; text-align: center; font-weight: 900; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
+    .palette-content { padding: 12px; flex: 1; overflow-y: auto; }
+    .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .tool-btn { background: #444; border: 1px solid #555; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; font-weight: bold; font-size: 13px; }
+    .tool-btn:hover { background: #ff8800; color: #000; }
+    
+    .prop-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #222; padding: 6px; border-radius: 6px; }
+    .prop-row input { width: 55%; background: #111; border: 1px solid #444; color: #fff; padding: 4px; border-radius: 4px; }
 
-    /* Tabs */
-    .tabs { display: flex; border-bottom: 2px solid #444; background: #222; }
-    .tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 700; cursor: pointer; color: #aaa; }
-    .tab.active { color: #ff8800; border-bottom: 3px solid #ff8800; background: #333; }
-
-    /* Content Area */
-    .palette-content { padding: 15px; flex: 1; overflow-y: auto; }
-    .section-title { font-size: 12px; color: #ff8800; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; }
-
-    /* Tool Grid */
-    .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-    .tool-btn { background: #444; border: 2px solid #555; padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.1s; }
-    .tool-btn:hover { background: #555; border-color: #ff8800; }
-    .tool-btn:active { transform: scale(0.95); }
-
-    /* Props & Settings */
-    .prop-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #222; padding: 8px; border-radius: 8px; }
-    .prop-row label { font-size: 12px; font-weight: bold; color: #ccc; }
-    .prop-row input { width: 50%; background: #111; border: 1px solid #444; color: #fff; padding: 6px; border-radius: 6px; font-weight: bold; }
-
-    /* Save/Publish Button */
-    .publish-btn { background: #28a745; border: 3px solid #1e7e34; color: white; padding: 15px; text-align: center; font-weight: 900; font-size: 16px; border-radius: 0 0 15px 15px; cursor: pointer; text-transform: uppercase; }
-    .publish-btn:hover { background: #218838; }
-
-    /* Top Right Navigation */
-    #nav-buttons { position: absolute; top: 20px; right: 20px; z-index: 100; display: flex; gap: 10px; }
-    .nav-btn { background: #444; border: 3px solid #555; color: white; padding: 10px 20px; border-radius: 12px; font-weight: 900; cursor: pointer; }
-    .nav-btn:hover { background: #ff8800; border-color: #cc6600; }
-
-    /* Modal */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 999; justify-content: center; align-items: center; }
-    .modal-card { width: 90%; max-width: 600px; background: #222; border-radius: 15px; padding: 20px; border: 4px solid #ff8800; position: relative; }
-    #form-iframe { width: 100%; height: 60vh; border: none; border-radius: 10px; margin-top: 15px; background: #fff; }
-    .close-btn { position: absolute; top: -15px; right: -15px; background: #d9534f; color: white; border: 3px solid #c9302c; padding: 10px 15px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+    .publish-btn { background: #28a745; padding: 12px; text-align: center; font-weight: 900; border-radius: 0 0 12px 12px; cursor: pointer; }
+    #nav-buttons { position: absolute; top: 20px; right: 20px; z-index: 100; }
+    .nav-btn { background: #444; border: 2px solid #555; color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation -->
   <div id="nav-buttons">
-    <button class="nav-btn" onclick="window.location.href='./index.html'">Go to Dorm Room</button>
+    <button class="nav-btn" onclick="window.location.href='./index.html'">Back to Dorm</button>
   </div>
 
-  <!-- Maker Pen UI Panel -->
   <div id="maker-palette">
-    <div class="palette-header">Maker Pen</div>
+    <div class="palette-header">MAKER PEN PALETTE</div>
     
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('palette')">Palette</div>
-      <div class="tab" onclick="switchTab('tools')">Tools</div>
-      <div class="tab" onclick="switchTab('config')">Config</div>
+      <div class="tab active" id="tab-btn-palette">Palette</div>
+      <div class="tab" id="tab-btn-tools">Shapes</div>
+      <div class="tab" id="tab-btn-config">Config</div>
     </div>
 
     <div class="palette-content" id="tab-palette">
-      <div class="section-title">Shapes</div>
+      <div style="font-size:12px; color:#ff8800; font-weight:bold; margin-bottom:8px;">CREATE SHAPES</div>
       <div class="tool-grid">
-        <div class="tool-btn" onclick="createShape('box')">Cube</div>
-        <div class="tool-btn" onclick="createShape('sphere')">Sphere</div>
-        <div class="tool-btn" onclick="createShape('cylinder')">Cylinder</div>
-        <div class="tool-btn" onclick="createShape('cone')">Cone</div>
+        <div class="tool-btn" id="create-box">Cube</div>
+        <div class="tool-btn" id="create-sphere">Sphere</div>
+        <div class="tool-btn" id="create-cylinder">Cylinder</div>
+        <div class="tool-btn" id="create-cone">Cone</div>
       </div>
-      <div class="section-title">Swatches (Color)</div>
-      <input type="color" id="maker-color" value="#007acc" style="width: 100%; height: 50px; border: none; border-radius: 8px; cursor: pointer;">
+      <div style="font-size:12px; color:#ff8800; font-weight:bold; margin-bottom:8px;">COLOR</div>
+      <input type="color" id="maker-color" value="#ff8800" style="width:100%; height:40px; border:none; border-radius:6px; cursor:pointer;">
     </div>
 
-    <div class="palette-content" id="tab-tools" style="display: none;">
-      <div class="section-title">Hierarchy (Ink in Room)</div>
-      <div id="hierarchy-list" style="background: #222; border-radius: 8px; padding: 10px; min-height: 150px; overflow-y: auto;">
-        <i style="color: #666; font-size: 12px;">No shapes drawn yet.</i>
-      </div>
+    <div class="palette-content" id="tab-tools" style="display:none;">
+      <div id="hierarchy-list"><i style="color:#666; font-size:12px;">No shapes drawn.</i></div>
     </div>
 
-    <div class="palette-content" id="tab-config" style="display: none;">
-      <div class="section-title">Room Settings</div>
-      <div class="prop-row"><label>Room Name</label><input type="text" id="room-name" value="^MyNewRoom"></div>
-      
-      <div class="section-title" style="margin-top: 20px;">Selected Shape</div>
-      <div id="inspector-content">
-        <i style="color: #666; font-size: 12px;">Use the Select tool on a shape.</i>
-      </div>
+    <div class="palette-content" id="tab-config" style="display:none;">
+      <div id="inspector-content"><i style="color:#666; font-size:12px;">Select a shape in the scene.</i></div>
     </div>
 
-    <!-- Hidden Output for the Form -->
-    <textarea id="json-payload" style="display:none;"></textarea>
-    
-    <div class="publish-btn" onclick="saveAndPublish()">Save & Publish Room</div>
+    <div class="publish-btn" id="btn-save-publish">Save & Copy Payload</div>
   </div>
 
-  <!-- 3D Environment -->
   <a-scene embedded>
-    <a-sky color="#252525"></a-sky>
-    <!-- Rec Room style grid floor -->
-    <a-plane position="0 0 0" rotation="-90 0 0" width="40" height="40" color="#333" gridhelper="size: 40; divisions: 40;"></a-plane>
+    <a-sky color="#222"></a-sky>
+    <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#333" gridhelper="size: 30; divisions: 30;"></a-plane>
     <a-ambient-light intensity="0.7"></a-ambient-light>
-    <a-directional-light position="2 5 3" intensity="0.6"></a-directional-light>
-    
-    <a-camera position="0 1.6 3" look-controls wasd-controls></a-camera>
+    <a-camera position="0 1.6 3" look-controls wasd-controls>
+      <a-cursor color="#ff8800" raycaster="objects: .clickable"></a-cursor>
+    </a-camera>
     <a-entity id="ink-space"></a-entity>
   </a-scene>
 
-  <!-- Publish Google Form Modal -->
-  <div id="publish-modal" class="modal-overlay">
-    <div class="modal-card">
-      <button class="close-btn" onclick="document.getElementById('publish-modal').style.display='none'">X</button>
-      <h2 style="margin: 0; color: #ff8800; text-transform: uppercase;">Room Published to Clipboard!</h2>
-      <p style="font-size: 14px; color: #ccc;">Paste your room payload into the form below to save it permanently.</p>
-      <iframe id="form-iframe" src="https://forms.gle/NdcGi2QNuVUTTE2Z6"></iframe>
-    </div>
-  </div>
-
   <script>
-    let sceneShapes = [];
-    let selectedShapeId = null;
+    document.addEventListener("DOMContentLoaded", () => {
+      let shapes = [];
+      let activeShapeId = null;
 
-    function switchTab(tabId) {
-      document.getElementById('tab-palette').style.display = 'none';
-      document.getElementById('tab-tools').style.display = 'none';
-      document.getElementById('tab-config').style.display = 'none';
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      
-      document.getElementById('tab-' + tabId).style.display = 'block';
-      event.target.classList.add('active');
-    }
-
-    function createShape(type) {
-      const id = "shape_" + Date.now();
-      const color = document.getElementById("maker-color").value;
-      const entity = document.createElement("a-entity");
-      
-      entity.setAttribute("id", id);
-      entity.setAttribute("geometry", { primitive: type });
-      entity.setAttribute("material", { color: color });
-      entity.setAttribute("position", `0 ${1 + sceneShapes.length * 0.5} -2`);
-      entity.classList.add("clickable");
-      
-      entity.addEventListener("click", () => selectShape(id));
-      document.getElementById("ink-space").appendChild(entity);
-      
-      sceneShapes.push({ id, type, entity, color });
-      updateHierarchy();
-      selectShape(id);
-    }
-
-    function selectShape(id) {
-      selectedShapeId = id;
-      updateHierarchy();
-      
-      const obj = sceneShapes.find(s => s.id === id);
-      if (!obj) return;
-      
-      const pos = obj.entity.getAttribute("position");
-      const scale = obj.entity.getAttribute("scale") || {x:1, y:1, z:1};
-
-      document.getElementById("inspector-content").innerHTML = `
-        <div class="prop-row"><label>Color</label><input type="color" value="${obj.color}" onchange="updateShape('${id}', 'color', this.value)"></div>
-        <div class="prop-row"><label>Pos X</label><input type="number" step="0.1" value="${pos.x}" onchange="updateShape('${id}', 'px', this.value)"></div>
-        <div class="prop-row"><label>Pos Y</label><input type="number" step="0.1" value="${pos.y}" onchange="updateShape('${id}', 'py', this.value)"></div>
-        <div class="prop-row"><label>Pos Z</label><input type="number" step="0.1" value="${pos.z}" onchange="updateShape('${id}', 'pz', this.value)"></div>
-        <button style="width:100%; margin-top:10px; background:#d9534f; border:none; padding:10px; color:white; font-weight:bold; border-radius:8px; cursor:pointer;" onclick="deleteShape('${id}')">Delete Shape</button>
-      `;
-      switchTab('config');
-    }
-
-    function updateShape(id, prop, val) {
-      const obj = sceneShapes.find(s => s.id === id);
-      if (!obj) return;
-
-      if (prop === 'color') {
-        obj.color = val;
-        obj.entity.setAttribute("material", "color", val);
-      } else {
-        const pos = obj.entity.getAttribute("position");
-        if (prop === 'px') pos.x = val;
-        if (prop === 'py') pos.y = val;
-        if (prop === 'pz') pos.z = val;
-        obj.entity.setAttribute("position", pos);
-      }
-    }
-
-    function deleteShape(id) {
-      const index = sceneShapes.findIndex(s => s.id === id);
-      if (index > -1) {
-        const entity = sceneShapes[index].entity;
-        entity.parentNode.removeChild(entity);
-        sceneShapes.splice(index, 1);
-        document.getElementById("inspector-content").innerHTML = `<i style="color: #666; font-size: 12px;">Use the Select tool on a shape.</i>`;
-        updateHierarchy();
-      }
-    }
-
-    function updateHierarchy() {
-      const list = document.getElementById("hierarchy-list");
-      list.innerHTML = "";
-      if (sceneShapes.length === 0) {
-        list.innerHTML = `<i style="color: #666; font-size: 12px;">No shapes drawn yet.</i>`;
-        return;
-      }
-      
-      sceneShapes.forEach(shape => {
-        const div = document.createElement("div");
-        div.style.padding = "8px";
-        div.style.marginBottom = "4px";
-        div.style.background = shape.id === selectedShapeId ? "#007acc" : "#333";
-        div.style.borderRadius = "6px";
-        div.style.cursor = "pointer";
-        div.style.fontSize = "12px";
-        div.style.fontWeight = "bold";
-        div.textContent = `[${shape.type.toUpperCase()}] Ink Shape`;
-        div.onclick = () => selectShape(shape.id);
-        list.appendChild(div);
-      });
-    }
-
-    async function saveAndPublish() {
-      const roomData = {
-        metadata: {
-          name: document.getElementById("room-name").value,
-          inkCost: sceneShapes.length * 0.5 + "%"
-        },
-        entities: sceneShapes.map(s => ({
-          type: s.type,
-          color: s.color,
-          position: s.entity.getAttribute("position")
-        }))
+      const switchTab = (target) => {
+        ["palette", "tools", "config"].forEach(t => {
+          document.getElementById(`tab-${t}`).style.display = t === target ? "block" : "none";
+          document.getElementById(`tab-btn-${t}`).classList.toggle("active", t === target);
+        });
       };
 
-      const payload = JSON.stringify(roomData);
-      document.getElementById("json-payload").value = payload;
-      
-      try {
-        await navigator.clipboard.writeText(payload);
-      } catch (e) {
-        console.warn("Clipboard auto-copy blocked.");
-      }
+      document.getElementById("tab-btn-palette").onclick = () => switchTab("palette");
+      document.getElementById("tab-btn-tools").onclick = () => switchTab("tools");
+      document.getElementById("tab-btn-config").onclick = () => switchTab("config");
 
-      document.getElementById("publish-modal").style.display = "flex";
-    }
+      const addShape = (type) => {
+        const id = "shape_" + Date.now();
+        const color = document.getElementById("maker-color").value;
+        const el = document.createElement("a-entity");
+
+        el.setAttribute("id", id);
+        el.setAttribute("geometry", { primitive: type });
+        el.setAttribute("material", { color: color });
+        el.setAttribute("position", `0 ${1 + shapes.length * 0.4} -2`);
+        el.classList.add("clickable");
+
+        el.addEventListener("click", () => selectShape(id));
+        document.getElementById("ink-space").appendChild(el);
+
+        shapes.push({ id, type, color, el });
+        updateHierarchy();
+        selectShape(id);
+      };
+
+      ["box", "sphere", "cylinder", "cone"].forEach(type => {
+        document.getElementById(`create-${type}`).onclick = () => addShape(type);
+      });
+
+      const selectShape = (id) => {
+        activeShapeId = id;
+        updateHierarchy();
+        const item = shapes.find(s => s.id === id);
+        if (!item) return;
+
+        const pos = item.el.getAttribute("position");
+        const inspector = document.getElementById("inspector-content");
+        inspector.innerHTML = `
+          <div class="prop-row"><label>X</label><input type="number" step="0.1" id="p-x" value="${pos.x}"></div>
+          <div class="prop-row"><label>Y</label><input type="number" step="0.1" id="p-y" value="${pos.y}"></div>
+          <div class="prop-row"><label>Z</label><input type="number" step="0.1" id="p-z" value="${pos.z}"></div>
+          <button id="btn-del-shape" style="width:100%; background:#d9534f; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px;">Delete</button>
+        `;
+
+        ["x", "y", "z"].forEach(axis => {
+          document.getElementById(`p-${axis}`).oninput = (e) => {
+            const current = item.el.getAttribute("position");
+            current[axis] = parseFloat(e.target.value) || 0;
+            item.el.setAttribute("position", current);
+          };
+        });
+
+        document.getElementById("btn-del-shape").onclick = () => {
+          item.el.parentNode.removeChild(item.el);
+          shapes = shapes.filter(s => s.id !== id);
+          inspector.innerHTML = `<i style="color:#666; font-size:12px;">Select a shape in the scene.</i>`;
+          updateHierarchy();
+        };
+
+        switchTab("config");
+      };
+
+      const updateHierarchy = () => {
+        const list = document.getElementById("hierarchy-list");
+        list.innerHTML = "";
+        if (!shapes.length) {
+          list.innerHTML = `<i style="color:#666; font-size:12px;">No shapes drawn.</i>`;
+          return;
+        }
+        shapes.forEach(s => {
+          const div = document.createElement("div");
+          div.style.padding = "6px";
+          div.style.marginBottom = "4px";
+          div.style.background = s.id === activeShapeId ? "#ff8800" : "#222";
+          div.style.color = s.id === activeShapeId ? "#000" : "#fff";
+          div.style.borderRadius = "4px";
+          div.style.cursor = "pointer";
+          div.style.fontSize = "12px";
+          div.style.fontWeight = "bold";
+          div.textContent = `Shape (${s.type})`;
+          div.onclick = () => selectShape(s.id);
+          list.appendChild(div);
+        });
+      };
+
+      document.getElementById("btn-save-publish").onclick = async () => {
+        const payload = JSON.stringify({
+          metadata: { name: "^CustomRoom" },
+          entities: shapes.map(s => ({
+            type: s.type,
+            color: s.color,
+            position: s.el.getAttribute("position")
+          }))
+        });
+        
+        try {
+          await navigator.clipboard.writeText(payload);
+          alert("Room JSON copied to clipboard!");
+        } catch(err) {
+          console.log(payload);
+          alert("Payload logged to developer browser console!");
+        }
+      };
+    });
   </script>
 </body>
 </html>
