@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "name": "Isle of Lost Skulls",
+    "creator": "Rec Room Originals",
+    "description": "Set sail into pirate waters and battle skeletal corsairs!"
+  },
+  "entities": [
+    {
+      "id": "ship_deck",
+      "type": "box",
+      "position": { "x": 0, "y": 0.2, "z": -4 },
+      "scale": { "x": 6, "y": 0.4, "z": 14 },
+      "color": "#4a2e00"
+    },
+    {
+      "id": "main_mast",
+      "type": "cylinder",
+      "position": { "x": 0, "y": 4, "z": -4 },
+      "scale": { "x": 0.4, "y": 8, "z": 0.4 },
+      "color": "#2d1c00"
+    },
+    {
+      "id": "cursed_skull_pedestal",
+      "type": "sphere",
+      "position": { "x": 0, "y": 1.2, "z": -9 },
+      "scale": { "x": 0.6, "y": 0.6, "z": 0.6 },
+      "color": "#e6e6e6"
+    }
+  ]
+}

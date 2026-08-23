@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "name": "Cyberpunk Heist",
+    "creator": "Rec Engine Studios",
+    "description": "Infiltrate a high-tech corporate vault and extract the neon core!"
+  },
+  "entities": [
+    {
+      "id": "vault_floor",
+      "type": "plane",
+      "position": { "x": 0, "y": 0, "z": -6 },
+      "rotation": { "x": -90, "y": 0, "z": 0 },
+      "scale": { "x": 16, "y": 16, "z": 1 },
+      "color": "#0d0221"
+    },
+    {
+      "id": "laser_grid_1",
+      "type": "cylinder",
+      "position": { "x": -2, "y": 1.5, "z": -5 },
+      "rotation": { "x": 0, "y": 0, "z": 90 },
+      "scale": { "x": 0.05, "y": 4, "z": 0.05 },
+      "color": "#ff0055"
+    },
+    {
+      "id": "laser_grid_2",
+      "type": "cylinder",
+      "position": { "x": 2, "y": 0.8, "z": -7 },
+      "rotation": { "x": 0, "y": 0, "z": 90 },
+      "scale": { "x": 0.05, "y": 4, "z": 0.05 },
+      "color": "#ff0055"
+    },
+    {
+      "id": "encrypted_data_core",
+      "type": "box",
+      "position": { "x": 0, "y": 1.2, "z": -10 },
+      "scale": { "x": 0.8, "y": 0.8, "z": 0.8 },
+      "color": "#00f5d4"
+    }
+  ]
+}

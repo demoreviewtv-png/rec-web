@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "name": "The Golden Trophy",
+    "creator": "Rec Room Originals",
+    "description": "Venture through the goblin kingdom to retrieve the Golden Trophy!"
+  },
+  "entities": [
+    {
+      "id": "courtyard_floor",
+      "type": "plane",
+      "position": { "x": 0, "y": 0, "z": -5 },
+      "rotation": { "x": -90, "y": 0, "z": 0 },
+      "scale": { "x": 20, "y": 20, "z": 1 },
+      "color": "#3b5323"
+    },
+    {
+      "id": "castle_gate_left",
+      "type": "box",
+      "position": { "x": -3, "y": 2, "z": -10 },
+      "scale": { "x": 1, "y": 4, "z": 1 },
+      "color": "#5a5a5a"
+    },
+    {
+      "id": "castle_gate_right",
+      "type": "box",
+      "position": { "x": 3, "y": 2, "z": -10 },
+      "scale": { "x": 1, "y": 4, "z": 1 },
+      "color": "#5a5a5a"
+    },
+    {
+      "id": "golden_trophy_pedestal",
+      "type": "cylinder",
+      "position": { "x": 0, "y": 0.5, "z": -12 },
+      "scale": { "x": 0.8, "y": 1, "z": 0.8 },
+      "color": "#ffd700"
+    }
+  ]
+}

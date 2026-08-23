@@ -1,0 +1,4 @@
+NAME: Isle of Lost Skulls
+TYPE: Rec Room Original Quest
+PLAYERS: 1-4
+DESCRIPTION: Set sail into pirate-infested waters, fight skeleton crews, and plunder cursed treasure on the tropical island!

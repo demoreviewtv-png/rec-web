@@ -1,0 +1,4 @@
+NAME: Cyberpunk Heist
+TYPE: Custom Rec Engine Quest
+PLAYERS: 1-2
+DESCRIPTION: Infiltrate a high-security neon corporate vault in Neon City, dodge lasers, and extract the encrypted data core!
