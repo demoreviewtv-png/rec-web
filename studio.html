@@ -3,76 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rec Engine - Studio Editor</title>
+  <title>Rec Engine - Studio Editor & VR</title>
+
+  <!-- A-Frame and WebXR Extras -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: #ccc; }
-    
+    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #181818; color: #eee; user-select: none; }
+
     #editor-layout {
       display: grid;
-      grid-template-columns: 220px 1fr 280px;
-      grid-template-rows: 40px 1fr 180px;
+      grid-template-columns: 240px 1fr 300px;
+      grid-template-rows: 48px 1fr 160px;
       height: 100vh;
     }
 
+    /* Top Navigation Toolbar */
     #toolbar {
       grid-column: 1 / -1;
-      background: #2d2d2d;
+      background: #252526;
       border-bottom: 1px solid #3c3c3c;
-      display: flex; align-items: center; padding: 0 10px; gap: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 10px;
     }
-    button {
-      background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 5px 12px;
-      border-radius: 3px; cursor: pointer; font-size: 12px;
-    }
-    button:hover { background: #007acc; border-color: #007acc; }
 
-    #hierarchy {
-      background: #252526; border-right: 1px solid #3c3c3c; padding: 10px; overflow-y: auto;
+    .brand-title {
+      font-weight: 800;
+      color: #ff7700;
+      font-size: 16px;
+      margin-right: 15px;
+      letter-spacing: 0.5px;
     }
-    .panel-title { font-weight: bold; font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 8px; }
-    .tree-item { padding: 4px 8px; cursor: pointer; border-radius: 3px; font-size: 13px; margin-bottom: 2px; }
-    .tree-item:hover { background: #2a2d2e; }
-    .tree-item.selected { background: #094771; color: #fff; }
 
-    #viewport-container { position: relative; background: #111; grid-column: 2; grid-row: 2; }
+    button, select {
+      background: #333334;
+      color: #fff;
+      border: 1px solid #454545;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    button:hover, select:hover { background: #007acc; border-color: #007acc; }
+
+    .btn-submit {
+      background: #28a745 !important;
+      border-color: #28a745 !important;
+      margin-left: auto;
+    }
+    .btn-submit:hover { background: #218838 !important; }
+
+    /* User Profile Chip in Toolbar */
+    #user-profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e1e1e;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid #3c3c3c;
+      cursor: pointer;
+    }
+    #user-profile-chip img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #ff7700;
+    }
+    #user-profile-chip span { font-size: 12px; font-weight: bold; }
+
+    /* Panels */
+    #hierarchy { background: #1e1e1e; border-right: 1px solid #3c3c3c; padding: 12px; overflow-y: auto; }
+    #viewport-container { position: relative; background: #0a0a0a; grid-column: 2; grid-row: 2; }
     a-scene { width: 100%; height: 100%; }
 
     #inspector {
-      background: #252526; border-left: 1px solid #3c3c3c; padding: 10px; grid-column: 3; grid-row: 2 / -1;
+      background: #1e1e1e;
+      border-left: 1px solid #3c3c3c;
+      padding: 12px;
+      grid-column: 3;
+      grid-row: 2 / -1;
       overflow-y: auto;
     }
-    .prop-group { margin-bottom: 15px; background: #2d2d2d; padding: 8px; border-radius: 4px; }
-    .prop-row { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; font-size: 12px; }
-    .prop-row label { width: 30%; }
-    .prop-row input { width: 65%; background: #1e1e1e; border: 1px solid #3c3c3c; color: #fff; padding: 4px; border-radius: 3px; }
-    .vector3 { display: flex; gap: 4px; width: 65%; }
-    .vector3 input { width: 33%; text-align: center; }
 
-    #bottom-panel {
-      grid-column: 1 / 3; grid-row: 3; background: #1e1e1e; border-top: 1px solid #3c3c3c; padding: 10px;
-    }
-    textarea { width: 100%; height: 110px; background: #141414; color: #4af626; font-family: monospace; border: none; padding: 8px; border-radius: 4px; resize: none; }
+    .panel-title { font-weight: 700; font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 10px; letter-spacing: 0.5px; }
+    .tree-item { padding: 6px 10px; cursor: pointer; border-radius: 4px; font-size: 13px; margin-bottom: 4px; background: #252526; }
+    .tree-item:hover { background: #2a2d2e; }
+    .tree-item.selected { background: #094771; color: #fff; font-weight: bold; }
 
-    /* Embedded Google Form Modal Overlay */
-    #form-modal {
+    .prop-group { margin-bottom: 15px; background: #252526; padding: 10px; border-radius: 6px; border: 1px solid #333; }
+    .prop-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 12px; }
+    .prop-row label { width: 35%; color: #aaa; }
+    .prop-row input, .prop-row select { width: 60%; background: #181818; border: 1px solid #3c3c3c; color: #fff; padding: 5px; border-radius: 3px; }
+
+    #bottom-panel { grid-column: 1 / 3; grid-row: 3; background: #181818; border-top: 1px solid #3c3c3c; padding: 10px; }
+    textarea { width: 100%; height: 95px; background: #111; color: #00ff66; font-family: monospace; border: 1px solid #333; padding: 8px; border-radius: 4px; resize: none; font-size: 11px; }
+
+    /* Modals (Google Form & Profile Settings) */
+    .modal-overlay {
       display: none;
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.85); z-index: 9999;
-      justify-content: center; align-items: center; flex-direction: column;
+      justify-content: center; align-items: center;
     }
-    #form-modal-content {
-      position: relative; width: 90%; max-width: 700px; height: 85vh;
-      background: #fff; border-radius: 8px; overflow: hidden;
+    .modal-card {
+      position: relative; width: 90%; max-width: 650px;
+      background: #252526; border-radius: 8px; padding: 20px;
+      border: 1px solid #3c3c3c; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    #form-modal iframe { width: 100%; height: 100%; border: none; }
-    .close-modal-btn {
-      position: absolute; top: 10px; right: 15px; background: #ff3d00;
-      color: #fff; font-weight: bold; border: none; padding: 6px 12px;
-      border-radius: 4px; cursor: pointer; z-index: 10000;
-    }
+    .modal-card h2 { margin-top: 0; color: #ff7700; }
+    .close-btn { position: absolute; top: 12px; right: 15px; background: #d9534f; border: none; }
+
+    #form-container { width: 100%; height: 75vh; border: none; border-radius: 4px; }
+    .avatar-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ff7700; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -80,112 +131,303 @@
   <div id="editor-layout">
     <!-- Toolbar -->
     <div id="toolbar">
-      <b style="color:#ffd700;">Studio Editor</b>
+      <span class="brand-title">REC STUDIO</span>
       <button onclick="createPrimitive('box')">+ Cube</button>
       <button onclick="createPrimitive('sphere')">+ Sphere</button>
       <button onclick="createPrimitive('cylinder')">+ Cylinder</button>
       <button onclick="createPrimitive('plane')">+ Plane</button>
-      <button onclick="exportAndOpenForm()" style="margin-left:auto; background:#28a745; border-color:#28a745;">Submit to Google Form</button>
-      <a href="./index.html" style="color:#fff; font-size:12px; text-decoration:none; margin-left:10px;">← Back to Game</a>
+
+      <!-- Account Profile Button -->
+      <div id="user-profile-chip" onclick="openProfileModal()">
+        <img id="toolbar-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=RecPlayer" alt="Avatar">
+        <span id="toolbar-username">RecPlayer</span>
+      </div>
+
+      <button class="btn-submit" onclick="exportAndOpenForm()">Submit to Google Form</button>
     </div>
 
     <!-- Hierarchy -->
     <div id="hierarchy">
-      <div class="panel-title">Hierarchy</div>
+      <div class="panel-title">Scene Objects</div>
       <div id="tree-root"></div>
     </div>
 
-    <!-- 3D Viewport -->
+    <!-- 3D WebXR Viewport -->
     <div id="viewport-container">
-      <a-scene embedded vr-mode-ui="enabled: false">
-        <a-sky color="#222"></a-sky>
-        <a-ambient-light color="#666"></a-ambient-light>
-        <a-point-light position="2 4 3" intensity="0.8"></a-point-light>
-        <a-camera id="editor-cam" position="0 2 5" look-controls wasd-controls></a-camera>
+      <a-scene embedded webxr="optionalFeatures: hit-test, local-floor;" vr-mode-ui="enabled: true">
+        <!-- Sky & Environment lighting -->
+        <a-sky color="#1a1a2e"></a-sky>
+        <a-ambient-light color="#888"></a-ambient-light>
+        <a-directional-light position="2 5 3" intensity="0.8" cast-shadow="true"></a-directional-light>
+        <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#222222" gridhelper="size: 30; divisions: 30;"></a-plane>
+
+        <!-- WebXR Player Rig with Controllers and Hands -->
+        <a-entity id="rig" position="0 0 3" movement-controls="fly: false">
+          <a-camera id="camera" position="0 1.6 0" look-controls="pointerLockEnabled: false" wasd-controls>
+            <a-cursor color="#ff7700" raycaster="objects: .selectable"></a-cursor>
+          </a-camera>
+
+          <!-- Left VR Controller -->
+          <a-entity id="leftHand" laser-controls="hand: left" raycaster="objects: .selectable; far: 5"></a-entity>
+
+          <!-- Right VR Controller -->
+          <a-entity id="rightHand" laser-controls="hand: right" raycaster="objects: .selectable; far: 5"></a-entity>
+        </a-entity>
+
+        <!-- User Scene Container -->
         <a-entity id="user-scene"></a-entity>
       </a-scene>
     </div>
 
     <!-- Inspector -->
     <div id="inspector">
-      <div class="panel-title">Room Metadata</div>
+      <div class="panel-title">Room Settings</div>
       <div class="prop-group">
-        <div class="prop-row"><label>Name</label><input type="text" id="room-name" value="My Custom Quest"></div>
-        <div class="prop-row"><label>Owner</label><input type="text" id="room-owner" value="HeroPlayer"></div>
-        <div class="prop-row"><label>Description</label><input type="text" id="room-desc" value="A cool custom room level."></div>
+        <div class="prop-row"><label>Room Title</label><input type="text" id="room-name" value="Custom Parkour Quest"></div>
+        <div class="prop-row"><label>Creator</label><input type="text" id="room-owner" value="RecPlayer" readonly></div>
+        <div class="prop-row"><label>Description</label><input type="text" id="room-desc" value="A custom level built with Rec Studio!"></div>
       </div>
 
       <div class="panel-title">Inspector</div>
-      <div id="inspector-content"><i>Select an object to edit.</i></div>
+      <div id="inspector-content"><i>Select an entity in the scene to edit properties.</i></div>
     </div>
 
-    <!-- JSON Output -->
+    <!-- Exported Payload Output -->
     <div id="bottom-panel">
-      <div class="panel-title">Exported JSON String</div>
-      <textarea id="code-output" readonly placeholder="Generated JSON payload will appear here..."></textarea>
+      <div class="panel-title">Generated JSON Payload</div>
+      <textarea id="code-output" readonly placeholder="Your generated room JSON payload will appear here..."></textarea>
     </div>
   </div>
 
-  <!-- Google Form Modal -->
-  <div id="form-modal">
-    <div id="form-modal-content">
-      <button class="close-modal-btn" onclick="closeFormModal()">✕ Close</button>
-      <!-- Embedded Google Form Link -->
-      <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScyB-YJ0f316xXgWd_-r_Q1G6rG5-Vw8z_Example/viewform?embedded=true" id="form-iframe">Loading Form...</iframe>
+  <!-- Profile & Local Account Modal -->
+  <div id="profile-modal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="close-btn" onclick="closeProfileModal()">✕</button>
+      <h2>Local Profile & Avatar Settings</h2>
+      <div style="text-align:center;">
+        <img id="profile-avatar-preview" class="avatar-preview" src="" alt="Avatar Preview">
+      </div>
+      <div class="prop-group">
+        <div class="prop-row"><label>Display Name</label><input type="text" id="acc-username"></div>
+        <div class="prop-row"><label>Avatar Seed</label><input type="text" id="acc-avatar-seed" oninput="updateAvatarPreview()"></div>
+        <div class="prop-row"><label>Bio</label><input type="text" id="acc-bio"></div>
+        <div class="prop-row"><label>Favorite Color</label><input type="color" id="acc-color"></div>
+      </div>
+      <button style="width: 100%; background: #007acc;" onclick="saveLocalAccount()">Save Local Profile</button>
     </div>
   </div>
 
-  <script src="./js/studio.js"></script>
+  <!-- Google Form Modal Overlay -->
+  <div id="form-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 750px; height: 85vh;">
+      <button class="close-btn" onclick="closeFormModal()">✕ Close</button>
+
+      <!-- Embedded Form Link -->
+      <iframe id="form-container" src="https://docs.google.com/forms/d/e/1FAIpQLScyB-YJ0f316xXgWd_-r_Q1G6rG5-Vw8z_Example/viewform?embedded=true">Loading Google Form...</iframe>
+    </div>
+  </div>
+
   <script>
-    // Functions handling embedded form overlay and ZIP generation
+    // Local Account Management
+    const DEFAULT_ACCOUNT = {
+      username: "RecPlayer",
+      avatarSeed: "RecPlayer",
+      bio: "Rec Room Creator & VR Explorer",
+      favoriteColor: "#ff7700",
+      level: 12
+    };
+
+    let userAccount = JSON.parse(localStorage.getItem("rec_studio_account")) || DEFAULT_ACCOUNT;
+
+    function initAccount() {
+      document.getElementById("toolbar-username").textContent = userAccount.username;
+      document.getElementById("room-owner").value = userAccount.username;
+      document.getElementById("toolbar-avatar").src = getAvatarUrl(userAccount.avatarSeed);
+    }
+
+    function getAvatarUrl(seed) {
+      return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed)}`;
+    }
+
+    function openProfileModal() {
+      document.getElementById("acc-username").value = userAccount.username;
+      document.getElementById("acc-avatar-seed").value = userAccount.avatarSeed;
+      document.getElementById("acc-bio").value = userAccount.bio;
+      document.getElementById("acc-color").value = userAccount.favoriteColor;
+      updateAvatarPreview();
+      document.getElementById("profile-modal").style.display = "flex";
+    }
+
+    function updateAvatarPreview() {
+      const seed = document.getElementById("acc-avatar-seed").value || "RecPlayer";
+      document.getElementById("profile-avatar-preview").src = getAvatarUrl(seed);
+    }
+
+    function saveLocalAccount() {
+      userAccount.username = document.getElementById("acc-username").value || "RecPlayer";
+      userAccount.avatarSeed = document.getElementById("acc-avatar-seed").value || "RecPlayer";
+      userAccount.bio = document.getElementById("acc-bio").value || "";
+      userAccount.favoriteColor = document.getElementById("acc-color").value;
+
+      localStorage.setItem("rec_studio_account", JSON.stringify(userAccount));
+      initAccount();
+      closeProfileModal();
+    }
+
+    function closeProfileModal() {
+      document.getElementById("profile-modal").style.display = "none";
+    }
+
+    // Scene & Object Management
+    let sceneObjects = [];
+    let selectedObjectId = null;
+
+    function createPrimitive(type) {
+      const id = "obj_" + Date.now();
+      const userScene = document.getElementById("user-scene");
+
+      const entity = document.createElement("a-entity");
+      entity.setAttribute("id", id);
+      entity.setAttribute("geometry", { primitive: type });
+      entity.setAttribute("material", { color: userAccount.favoriteColor || "#ff7700" });
+      entity.setAttribute("position", `0 ${1 + sceneObjects.length * 0.2} -2`);
+      entity.classList.add("selectable");
+
+      entity.addEventListener("click", () => selectObject(id));
+      userScene.appendChild(entity);
+
+      sceneObjects.push({ id, type, entity });
+      updateHierarchy();
+      selectObject(id);
+    }
+
+    function selectObject(id) {
+      selectedObjectId = id;
+      updateHierarchy();
+      renderInspector();
+    }
+
+    function updateHierarchy() {
+      const root = document.getElementById("tree-root");
+      root.innerHTML = "";
+
+      sceneObjects.forEach(obj => {
+        const item = document.createElement("div");
+        item.className = "tree-item" + (obj.id === selectedObjectId ? " selected" : "");
+        item.textContent = `${obj.type.toUpperCase()} (${obj.id.slice(-4)})`;
+        item.onclick = () => selectObject(obj.id);
+        root.appendChild(item);
+      });
+    }
+
+    function renderInspector() {
+      const container = document.getElementById("inspector-content");
+      const obj = sceneObjects.find(o => o.id === selectedObjectId);
+
+      if (!obj) {
+        container.innerHTML = "<i>Select an entity in the scene to edit properties.</i>";
+        return;
+      }
+
+      const pos = obj.entity.getAttribute("position");
+      const color = obj.entity.getAttribute("material").color;
+
+      container.innerHTML = `
+        <div class="prop-group">
+          <div class="prop-row"><label>ID</label><input type="text" value="${obj.id}" disabled></div>
+          <div class="prop-row"><label>Type</label><input type="text" value="${obj.type}" disabled></div>
+          <div class="prop-row"><label>Color</label><input type="color" value="${color}" onchange="updateObjColor(this.value)"></div>
+        </div>
+        <div class="panel-title">Transform</div>
+        <div class="prop-group">
+          <div class="prop-row"><label>Pos X</label><input type="number" step="0.1" value="${pos.x}" onchange="updateObjPos('x', this.value)"></div>
+          <div class="prop-row"><label>Pos Y</label><input type="number" step="0.1" value="${pos.y}" onchange="updateObjPos('y', this.value)"></div>
+          <div class="prop-row"><label>Pos Z</label><input type="number" step="0.1" value="${pos.z}" onchange="updateObjPos('z', this.value)"></div>
+        </div>
+        <button style="width:100%; background:#d9534f;" onclick="deleteSelectedObject()">Delete Object</button>
+      `;
+    }
+
+    function updateObjColor(val) {
+      const obj = sceneObjects.find(o => o.id === selectedObjectId);
+      if (obj) obj.entity.setAttribute("material", "color", val);
+    }
+
+    function updateObjPos(axis, val) {
+      const obj = sceneObjects.find(o => o.id === selectedObjectId);
+      if (obj) {
+        const pos = obj.entity.getAttribute("position");
+        pos[axis] = parseFloat(val);
+        obj.entity.setAttribute("position", pos);
+      }
+    }
+
+    function deleteSelectedObject() {
+      const index = sceneObjects.findIndex(o => o.id === selectedObjectId);
+      if (index !== -1) {
+        sceneObjects[index].entity.parentNode.removeChild(sceneObjects[index].entity);
+        sceneObjects.splice(index, 1);
+        selectedObjectId = null;
+        updateHierarchy();
+        renderInspector();
+      }
+    }
+
+    // Google Form & JSON Payload Handler
     async function exportAndOpenForm() {
       const name = document.getElementById("room-name").value || "Untitled Room";
-      const owner = document.getElementById("room-owner").value || "Anonymous";
       const desc = document.getElementById("room-desc").value || "No description.";
 
-      // Build JSON Payload
       const roomData = {
-        metadata: { name, owner, desc, timestamp: new Date().toISOString() },
+        metadata: {
+          name,
+          creator: userAccount.username,
+          description: desc,
+          createdTimestamp: new Date().toISOString()
+        },
         entities: sceneObjects.map(obj => ({
           id: obj.id,
           type: obj.type,
           position: obj.entity.getAttribute("position"),
           rotation: obj.entity.getAttribute("rotation"),
           scale: obj.entity.getAttribute("scale"),
-          color: obj.entity.getAttribute("color")
+          color: obj.entity.getAttribute("material").color
         }))
       };
 
       const jsonString = JSON.stringify(roomData, null, 2);
       document.getElementById("code-output").value = jsonString;
 
-      // Copy JSON string to Clipboard automatically
+      // Copy Payload automatically
       try {
         await navigator.clipboard.writeText(jsonString);
-        alert("Room JSON String copied to clipboard! Paste it into the form below.");
+        alert("Room JSON String auto-copied to clipboard! Paste it into your form submission.");
       } catch (err) {
-        console.log("Could not auto-copy to clipboard: ", err);
+        console.warn("Clipboard access failed:", err);
       }
 
-      // Generate local ZIP inside 'room data' directory structure
+      // Generate local ZIP
       const zip = new JSZip();
-      const roomFolder = zip.folder("room data").folder(name.replace(/[^a-z0-9]/gi, '_').toLowerCase());
-      roomFolder.file("info.txt", `NAME: ${name}\nOWNER: ${owner}\nDESCRIPTION: ${desc}`);
+      const roomFolder = zip.folder("room_data");
       roomFolder.file("room.json", jsonString);
+      roomFolder.file("creator_info.txt", `CREATOR: ${userAccount.username}\nBIO: ${userAccount.bio}`);
 
       const blob = await zip.generateAsync({ type: "blob" });
       const downloadLink = document.createElement("a");
       downloadLink.href = URL.createObjectURL(blob);
-      downloadLink.download = `${name.replace(/[^a-z0-9]/gi, '_')}_room_data.zip`;
+      downloadLink.download = `${name.replace(/[^a-z0-9]/gi, '_')}_data.zip`;
       downloadLink.click();
 
-      // Show embedded Google Form Modal
+      // Open Form Overlay Modal
       document.getElementById("form-modal").style.display = "flex";
     }
 
     function closeFormModal() {
       document.getElementById("form-modal").style.display = "none";
     }
+
+    // Initialize application state
+    window.onload = initAccount;
   </script>
 </body>
 </html>
